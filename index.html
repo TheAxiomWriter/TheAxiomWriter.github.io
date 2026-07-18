@@ -13,15 +13,15 @@
   --text: #d4d0c8;
   --muted: #7a7870;
   --faint: #3a3835;
-  --gold: #b91c1c; /* Axiom Red */
-  --glow: rgba(232, 200, 130, 0.4); /* Pale Gold */
+  --gold: #b91c1c;
+  --glow: rgba(232, 200, 130, 0.4);
 }
 
 *, *::before, *::after { 
   box-sizing: border-box; 
   margin: 0; 
   padding: 0; 
-  user-select: none; /* 全局禁止选中文字 */
+  user-select: none;
   -webkit-user-select: none;
 }
 
@@ -30,22 +30,19 @@ html { scroll-behavior: smooth; }
 body {
   background: var(--black);
   color: var(--text);
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'Consolas', 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
   font-size: 16px;
   line-height: 1.8;
   overflow-x: hidden;
   transition: filter 1.5s ease;
-  cursor: none; /* 核心区域隐藏系统指针 */
+  cursor: auto; /* 恢复系统默认指针 */
 }
 
-/* 恢复交互元素的系统指针 */
 a, button, iframe, .music-card, .agree-btn, .play-btn { cursor: auto !important; }
 
-/* 呼吸闪烁层（亮度降至1.3） */
 body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 @keyframes softBlink { 0% { filter: brightness(1); } 50% { filter: brightness(1.3); } 100% { filter: brightness(1); } }
 
-/* 扫描线动效 */
 #scanline {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998;
   background: linear-gradient(to bottom, transparent 0%, transparent 49%, rgba(255,255,255,0.03) 50%, transparent 51%, transparent 100%);
@@ -59,7 +56,7 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
   position: fixed;
   width: 70px;
   height: 70px;
-  background: radial-gradient(circle, rgba(232,200,130,0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(232,200,130,0.85) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
   z-index: 9999;
@@ -70,33 +67,29 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
   align-items: center;
   justify-content: center;
 }
-@keyframes glowBreath { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.85; } }
+@keyframes glowBreath { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.6; } }
 
-/* 内层实心小点，不参与呼吸，精确对应鼠标位置 */
 #cursor-dot {
   width: 6px;
   height: 6px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.7);
   border-radius: 50%;
   pointer-events: none;
   z-index: 10000;
 }
 
-/* 触控设备恢复默认光标，隐藏自定义光晕 */
 @media (hover: none) and (pointer: coarse) {
   *, *::before, *::after { cursor: auto !important; }
   #cursor-glow { display: none; }
   body { cursor: auto; }
 }
 
-/* 背景粒子 */
 #particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; opacity: 0.4; }
 
-/* 页面层级 */
 .page { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; opacity: 0; transition: opacity 2s ease; }
 .page.visible { opacity: 1; }
 
-/* ── 警告页 (内容A) ── */
+/* ── 警告页 ── */
 #warning-screen {
   position: fixed; inset: 0; background: var(--black); z-index: 2000;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -127,11 +120,16 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 }
 @keyframes fadeSymbol { 0% { opacity: 0; transform: translateY(16px); } 100% { opacity: 1; transform: translateY(0); } }
 
-/* ── 临时编号系统 ── */
+/* ── 临时编号 (竖排侧边条修复) ── */
 #temp-id {
-  position: absolute; bottom: 20px; right: 20px; z-index: 90; pointer-events: none;
-  font-size: 0.7rem; color: var(--gold); letter-spacing: 0.1em; 
-  text-shadow: 0 0 8px var(--glow); white-space: nowrap;
+  position: fixed; top: 50%; right: 12px; z-index: 90; pointer-events: none;
+  font-size: 0.65rem; color: var(--gold); letter-spacing: 0.2em;
+  text-shadow: 0 0 8px var(--glow);
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  white-space: nowrap;
+  max-height: 90vh;
+  transform: translateY(-50%);
 }
 
 /* ── 布局 & 组件 ── */
@@ -143,13 +141,13 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 
 .bio-section { padding: 3rem 2rem; max-width: 900px; margin: 0 auto; order: 3; transition: transform 0.5s ease; width: 100%; }
 .bio-card { background: var(--deep); padding: 2rem; border-left: 3px solid var(--gold); border: 1px solid var(--border); border-left-width: 3px; }
-.bio-text { font-size: 0.95rem; text-align: justify; white-space: pre-line; transition: opacity 0.3s; }
+.bio-text { font-size: 0.95rem; text-align: justify; white-space: pre-line; transition: opacity 0.3s; letter-spacing: 0.02em; }
 
 .music-section { padding: 3rem 2rem; max-width: 900px; margin: 0 auto; order: 5; transition: transform 0.5s ease; width: 100%; }
 .section-label { font-size: 0.75rem; letter-spacing: 0.4em; color: var(--gold); margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem; }
 .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-/* ── 音乐区重构 ── */
+/* ── 音乐区 ── */
 .archive-entry {
   border: 1px solid var(--faint); padding: 1.2rem; text-align: center; color: var(--gold);
   letter-spacing: 0.1em; font-size: 0.9rem; transition: all 0.3s; margin-bottom: 2rem;
@@ -175,38 +173,27 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 .play-btn:hover { border-color: var(--gold); color: var(--gold); }
 .track-meta { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.8rem; }
 .track-meta span { margin-right: 1.5rem; }
-.track-log { font-size: 0.9rem; color: #555; line-height: 1.6; border-left: 2px solid var(--faint); padding-left: 1rem; margin-top: 0.5rem; min-height: 20px; }
+.track-log { font-size: 0.9rem; color: #555; line-height: 1.6; border-left: 2px solid var(--faint); padding-left: 1rem; margin-top: 0.5rem; min-height: 20px; letter-spacing: 0.02em; }
 .track-log s { text-decoration: line-through; color: #444; }
 .hidden-audio { display: none; }
 
-/* ── 彩蛋文字层 ── */
+/* ── 彩蛋 ── */
 .easter-egg { position: fixed; color: var(--muted); font-size: 1.2rem; pointer-events: none; z-index: 8000; letter-spacing: 0.1em; text-shadow: 0 0 10px rgba(255,255,255,0.1); white-space: nowrap; transform: translate(-50%, -50%); opacity: 0; }
 .egg-float { animation: floatUp 3s ease-out forwards; }
-.egg-float-fast { animation: floatUp 1.95s ease-out forwards; } /* 快 35% */
-.egg-float-slow { animation: floatUp 4.4s ease-out forwards; } /* 慢 68% */
+.egg-float-fast { animation: floatUp 1.95s ease-out forwards; }
+.egg-float-slow { animation: floatUp 4.4s ease-out forwards; }
 @keyframes floatUp { 0% { opacity: 0; transform: translate(-50%, 0); } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -60px); filter: blur(2px); } }
 .egg-sink { transition: all 3s ease; opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .egg-sink.fade { opacity: 0; transform: translate(-50%, -50%) scale(0.8); filter: blur(4px); }
 
-/* ── 无光之人 ── */
-#voidling {
-  position: fixed; width: 120px; height: auto; pointer-events: none; z-index: 50; opacity: 0.5;
-  transition: opacity 2s ease, transform 0.1s; filter: drop-shadow(0 0 5px rgba(0,0,0,0.8));
-}
-.voidling-shiver { animation: shiver 0.08s infinite alternate; }
-@keyframes shiver { 0% { transform: translate(-3px, 2px); } 100% { transform: translate(3px, -2px); } }
-
-/* 乱序干扰 */
-.glitch-text { font-family: monospace; color: #666; }
+.glitch-text { font-family: 'Consolas', 'JetBrains Mono', 'Fira Code', monospace; color: #666; }
 
 </style>
 </head>
 <body>
 
-<!-- 扫描线 -->
 <div id="scanline"></div>
 
-<!-- 警告页 (内容A) -->
 <div id="warning-screen">
   <div class="warning-box" id="warningBox">
     <div class="warning-title">WARNING</div>
@@ -218,7 +205,6 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
   </div>
 </div>
 
-<!-- 双层光标 -->
 <div id="cursor-glow"><div id="cursor-dot"></div></div>
 
 <canvas id="particles"></canvas>
@@ -249,23 +235,23 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
   <div id="temp-id"></div>
 </div>
 
-<!-- 无光之人 (图片映射: 1=idle, 2=flee, 3=run) -->
-<img id="voidling" src="images/voidling-1.png" alt="" style="left: 80%; top: 80%;">
-
 <script>
 // ═══════════════════════════════════════════════
-// 核心引擎区 (无条件执行，不受任何逻辑影响)
+// 核心引擎区 (无条件执行)
 // ═══════════════════════════════════════════════
 
-// --- 核心状态 ---
 let isPaused = false;
 let mx = window.innerWidth/2, my = window.innerHeight/2;
 let audioCtx = null;
-let staticOsc = null;
 let clickCount = 0;
 
-// --- 1. 光晕鼠标与触控适配 ---
+// --- 1. 光晕鼠标 (立即初始化到屏幕中心) ---
 const cursorGlow = document.getElementById('cursor-glow');
+if (cursorGlow) {
+    cursorGlow.style.left = (window.innerWidth / 2) + 'px';
+    cursorGlow.style.top = (window.innerHeight / 2) + 'px';
+}
+
 function updateMousePos(x, y) {
     mx = x; my = y;
     if(!isPaused && cursorGlow) { 
@@ -283,7 +269,7 @@ if (cursorGlow) {
     document.addEventListener('mouseup', () => cursorGlow.style.transform = 'translate(-50%, -50%) scale(1)');
 }
 
-// --- 2. 粒子系统 ---
+// --- 2. 粒子系统 (双色漂移淡出重写版) ---
 const canvas = document.getElementById('particles');
 if (canvas) {
     const ctx = canvas.getContext('2d');
@@ -291,16 +277,33 @@ if (canvas) {
     function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
     resize(); 
     window.addEventListener('resize', resize);
-    for (let i = 0; i < 40; i++) {
-      particles.push({ x: Math.random()*W, y: Math.random()*H, s: Math.random()*1.5+0.2, vy: -(Math.random()*0.3+0.05), a: Math.random()*0.6+0.15 });
+    
+    for (let i = 0; i < 88; i++) {
+      particles.push({
+        x: Math.random()*W, y: Math.random()*H,
+        s: Math.random()*2+0.3,
+        vy: -(Math.random()*0.6+0.05),
+        vx: (Math.random()-0.5)*0.3,
+        a: Math.random()*0.5+0.2,
+        life: Math.random()*200+100,
+        age: 0,
+        color: Math.random() > 0.5 ? '185,28,28' : '212,175,110'
+      });
     }
+    
     function drawParticles() {
       if(!isPaused) {
         ctx.clearRect(0, 0, W, H);
         particles.forEach(p => {
-          p.y += p.vy; if(p.y < -10) p.y = H + 10;
+          p.y += p.vy; p.x += p.vx; p.age++;
+          let fade = 1 - (p.age / p.life);
+          if(fade <= 0 || p.y < -10) {
+            p.x = Math.random()*W; p.y = H + Math.random()*50;
+            p.age = 0; p.life = Math.random()*200+100;
+            fade = 1;
+          }
           ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(200, 200, 200, ${p.a})`; ctx.fill();
+          ctx.fillStyle = `rgba(${p.color}, ${p.a * fade})`; ctx.fill();
         });
       }
       requestAnimationFrame(drawParticles);
@@ -308,235 +311,8 @@ if (canvas) {
     drawParticles();
 }
 
-// --- 3. 无光之人 (031) ---
-const voidling = document.getElementById('voidling');
-let vState = 'idle';
-let vx = window.innerWidth * 0.8, vy = window.innerHeight * 0.8;
-let lastMx = mx, lastMy = my;
-let cornerTrapCount = 0;
-let isShivering = false;
-
-let today = new Date().toDateString();
-let storedDate = localStorage.getItem('031BanishedDate');
-let banished = false;
-
-if(storedDate === today) {
-    banished = localStorage.getItem('031Banished') === 'true';
-} else {
-    localStorage.removeItem('031Banished');
-    localStorage.removeItem('031BanishedDate');
-}
-
-if(banished && voidling) { voidling.style.display = 'none'; }
-
-let lastActiveTime = Date.now();
-let afkCooldown = false;
-
-function resetAfk() {
-  lastActiveTime = Date.now();
-  if(banished || vState === 'attack' || vState === 'hidden' || !voidling) return;
-  voidling.style.opacity = '0.4';
-  voidling.src = 'images/voidling-1.png'; // Idle
-  afkCooldown = false;
-}
-document.addEventListener('mousemove', resetAfk);
-document.addEventListener('touchmove', resetAfk);
-document.addEventListener('touchstart', resetAfk);
-
-function playStatic(play) {
-  if(!play && staticOsc) { staticOsc.stop(); staticOsc.disconnect(); staticOsc = null; return; }
-  if(play && !staticOsc) {
-    try {
-      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if(audioCtx.state === 'suspended') audioCtx.resume();
-      
-      let bufferSize = audioCtx.sampleRate * 0.2;
-      let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-      let data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-      staticOsc = audioCtx.createBufferSource();
-      staticOsc.buffer = buffer;
-      staticOsc.loop = true;
-      let gain = audioCtx.createGain();
-      gain.gain.value = 0.03;
-      staticOsc.connect(gain); gain.connect(audioCtx.destination);
-      staticOsc.start();
-    } catch(e) { console.error("Audio static failed:", e); }
-  }
-}
-
-function voidlingLoop() {
-  if(isPaused || banished || vState === 'hidden' || vState === 'attack' || !voidling) {
-    requestAnimationFrame(voidlingLoop); return;
-  }
-  
-  if(vState === 'idle' && !afkCooldown && (Date.now() - lastActiveTime > 12000)) {
-      afkCooldown = true;
-      voidling.style.opacity = '0.8';
-      voidling.src = 'images/voidling-1.png'; // Idle
-      setTimeout(() => {
-          if(vState === 'idle') voidling.style.opacity = '0.4';
-          setTimeout(() => { afkCooldown = false; }, 4000);
-      }, 4000);
-  }
-
-  let dist = Math.hypot(mx - vx, my - vy);
-  let mouseSpeed = Math.hypot(mx - lastMx, my - lastMy);
-  lastMx = mx; lastMy = my;
-
-  if(dist < 180) {
-    vState = 'flee';
-    voidling.src = 'images/voidling-2.png'; // Flee
-    voidling.style.opacity = '0.7';
-    
-    let angle = Math.atan2(vy - my, vx - mx);
-    let vSpeed = Math.min(mouseSpeed * 0.8 + 2, 15);
-    vx += Math.cos(angle) * vSpeed;
-    vy += Math.sin(angle) * vSpeed;
-
-    let hitCorner = false;
-    if(vx < 0) { vx = 0; hitCorner = true; }
-    if(vx > window.innerWidth - 120) { vx = window.innerWidth - 120; hitCorner = true; }
-    if(vy < 0) { vy = 0; hitCorner = true; }
-    if(vy > window.innerHeight - 200) { vy = window.innerHeight - 200; hitCorner = true; }
-
-    if(hitCorner && !isShivering) {
-      isShivering = true;
-      vState = 'cornered';
-      voidling.src = 'images/voidling-1.png'; // Idle (缩成一团)
-      voidling.classList.add('voidling-shiver');
-      playStatic(true);
-      
-      cornerTrapCount++;
-      setTimeout(() => {
-        isShivering = false;
-        voidling.classList.remove('voidling-shiver');
-        playStatic(false);
-        if(cornerTrapCount >= 2) { triggerAttack(); }
-      }, 800);
-    }
-  } else {
-    if(vState === 'flee') {
-      vState = 'idle';
-      voidling.src = 'images/voidling-1.png'; // Idle
-      voidling.style.opacity = '0.4';
-    }
-  }
-  
-  voidling.style.left = vx + 'px';
-  voidling.style.top = vy + 'px';
-  requestAnimationFrame(voidlingLoop);
-}
-requestAnimationFrame(voidlingLoop);
-
-function shakeElement(el, duration = 500) {
-    if(!el) return;
-    let start = Date.now();
-    let interval = setInterval(() => {
-        let elapsed = Date.now() - start;
-        if (elapsed >= duration) {
-            clearInterval(interval);
-            el.style.transform = '';
-            return;
-        }
-        let x = (Math.random() - 0.5) * 12;
-        let y = (Math.random() - 0.5) * 12;
-        el.style.transform = `translate(${x}px, ${y}px)`;
-    }, 40);
-}
-
-let origBioText = "";
-function triggerAttack() {
-  if(banished || !voidling) return;
-  vState = 'attack';
-  voidling.src = 'images/voidling-3.png'; // Run/Attack
-  
-  let bioCard = document.getElementById('bioCard');
-  if(!bioCard) return;
-  
-  let bioRect = bioCard.getBoundingClientRect();
-  vx = bioRect.left + 50; vy = bioRect.top - 50;
-  voidling.style.left = vx + 'px'; voidling.style.top = vy + 'px';
-  
-  let mode = Math.random() > 0.5 ? 'swap' : 'scramble';
-  
-  setTimeout(() => {
-    shakeElement(bioCard, 500);
-    playStatic(true);
-    
-    if(mode === 'swap') {
-      let bioSec = document.getElementById('bioSec');
-      if(bioSec) bioSec.style.order = "6";
-    } else {
-      let bioEl = document.getElementById('bioText');
-      if(bioEl) {
-        origBioText = bioEl.innerText;
-        bioEl.innerText = scrambleString(origBioText);
-        bioEl.classList.add('glitch-text');
-      }
-    }
-    
-    setTimeout(() => playStatic(false), 500);
-
-    let checkDist = setInterval(() => {
-      if(Math.hypot(mx - vx, my - vy) < 150) {
-        clearInterval(checkDist);
-        voidling.style.opacity = '0';
-        vState = 'hidden';
-        
-        let respawnTime = 7000 + Math.random() * 16000;
-        setTimeout(() => {
-            banished = true;
-            localStorage.setItem('031Banished', 'true');
-            localStorage.setItem('031BanishedDate', new Date().toDateString());
-            triggerAxiomRestore(mode);
-        }, respawnTime);
-      }
-    }, 100);
-    
-  }, 500);
-}
-
-function scrambleString(str) {
-  let arr = str.split('');
-  for(let i=arr.length-1; i>0; i--) {
-    let j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr.join('');
-}
-
-function triggerAxiomRestore(mode) {
-  let waitTime = 6000 + Math.random() * 5000;
-  setTimeout(() => {
-    let title = document.getElementById('axiomTitle');
-    if(title) title.classList.add('restoring');
-    
-    setTimeout(() => {
-      if(mode === 'swap') {
-        let bioSec = document.getElementById('bioSec');
-        if(bioSec) bioSec.style.order = "3";
-      } else {
-        let bioEl = document.getElementById('bioText');
-        if(bioEl) {
-          bioEl.classList.remove('glitch-text');
-          bioEl.innerText = origBioText;
-        }
-      }
-      
-      document.body.classList.add('blink-soft');
-      setTimeout(() => {
-        document.body.classList.remove('blink-soft');
-        if(title) title.classList.remove('restoring');
-      }, 1500);
-      
-    }, 2000);
-  }, waitTime);
-}
-
-// --- 4. 全局点击与彩蛋系统 (独立运行) ---
+// --- 3. 全局点击与彩蛋 ---
 document.addEventListener('click', (e) => {
-  // 确保在任何点击时初始化并解锁 AudioContext
   if (!audioCtx) {
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(err) {}
   }
@@ -593,13 +369,13 @@ document.addEventListener('click', (e) => {
 
 
 // ═══════════════════════════════════════════════
-// UI 逻辑区 (包裹在 try...catch 中，容错隔离)
+// UI 逻辑区 (try...catch 容错隔离)
 // ═══════════════════════════════════════════════
 
 const tracks = [
     { id: "001", name: "PLASTIC NURSERY", obj: "Object: 000-NEGATION", file: "File No: A-000-甲", log: "Rainbow dripping in a paper cup. Pick the candy, never give it up. Everything is sweet, everything is bright. Until the heavy footsteps echo through the night. So, you are saying this is correct? Denied.", src: "audio/001-plastic-nursery-000-negation.mp3" },
     { id: "002", name: "THE DOLL RESTORER", obj: "Object: 168-NO REGRETS REMAINING", file: "File No: A-168-乙", log: "Be a good doll. Don't you fight the thread. I'll paint a permanent smile on your face. Listen to me. Freedom is a virus. Thinking is an agony.", src: "audio/002-doll-restorer-168-no-regrets.mp3" },
-    { id: "003", name: "USER MANUAL: YI", obj: "Character: YI SHENG / THEAXIOMWRITER", file: "File No.: A-0000-Alpha", log: "Silence is a luxury you simply cannot afford. Guess who you are looking at? Current state: <s>Elegantly... sipping jasmine tea.</s> No, writing like crazy.", src: "audio/003-user-manual-yi-axw.mp3" },
+    { id: "003", name: "USER MANUAL: YI", obj: "Character: YI SHENG / THEAXIOMWRITER", file: "File No: A-0000-Alpha", log: "Silence is a luxury you simply cannot afford. Guess who you are looking at? Current state: <s>Elegantly... sipping jasmine tea.</s> No, writing like crazy.", src: "audio/003-user-manual-yi-axw.mp3" },
     { id: "004", name: "THE BYSTANDER", obj: "Character: LI SIYUAN (THE PLAYER)", file: "File No: A-007-丁", log: "Watching the earth spin, pretending I know the drill. Chewing absurdity like snacks, keeping perfectly still. Zero expectations means no feeling of the fall.", src: "audio/004-bystander-li-siyuan.mp3" },
     { id: "005", name: "NEW GAME", obj: "Character: ILLIAN VOLOS (NUMBER FOUR)", file: "File No: A-014-戊", log: "New game, same map, different seed. I've run the numbers, checked every door — the devs left one room with no floor. Curiosity is an acceptable variable. Someone has to watch the whole thing play out. What's up, Boss? Another field run? Coming, coming!", src: "audio/005-new-game-illian-volos.mp3" },
     { id: "006", name: "TREASURE 147", obj: "Object: 076-THE NAMELESS PRISONER", file: "File No: A-076-己", log: "Another day of experiments. They lock me in this perfect steel greenhouse; I am a display piece that cannot die. They enshrine me at the sterile highest point, calculating my daily life with absolute rationality. The cloned dog is still mechanically wagging its tail at my feet.", src: "audio/006-treasure-147-nameless-prisoner.mp3" },
@@ -623,7 +399,6 @@ function typeWriter(element, text, i) {
 
 function startMainSiteLogic() {
   try {
-    // 1. 临时编号防重复生成
     const chars = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
     let lastId = sessionStorage.getItem('last_temp_id') || '';
     let newId = '';
@@ -638,7 +413,6 @@ function startMainSiteLogic() {
     const tempIdEl = document.getElementById('temp-id');
     if (tempIdEl) tempIdEl.innerText = newId;
 
-    // 2. 开屏动画与正文过渡
     setTimeout(() => { 
         const opening = document.getElementById('opening');
         const mainContent = document.getElementById('mainContent');
@@ -646,11 +420,10 @@ function startMainSiteLogic() {
         if (mainContent) mainContent.classList.add('visible');
     }, 3000);
 
-    // 3. 音乐区渲染
     const list = document.getElementById('archiveList');
     if (!list) throw new Error("Archive list element not found");
     
-    list.innerHTML = ''; // 清空，防止重复
+    list.innerHTML = '';
     tracks.forEach((t, index) => {
         let item = document.createElement('div');
         item.className = 'track-item';
@@ -669,7 +442,6 @@ function startMainSiteLogic() {
         list.appendChild(item);
     });
 
-    // 4. 展开入口逻辑
     let isArchiveOpen = false;
     const archiveEntryBtn = document.getElementById('archiveEntry');
     if (archiveEntryBtn) {
@@ -695,7 +467,6 @@ function startMainSiteLogic() {
         });
     }
 
-    // 5. 播放逻辑 (HTML5 Audio)
     let currentPlaying = null;
     document.querySelectorAll('.play-btn').forEach(btn => {
         btn.addEventListener('click', function() {
