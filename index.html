@@ -17,12 +17,11 @@
   --glow: rgba(232, 200, 130, 0.4); /* Pale Gold */
 }
 
-/* 全局冷酷等宽终端字体 */
 *, *::before, *::after { 
   box-sizing: border-box; 
   margin: 0; 
   padding: 0; 
-  user-select: none; /* 叙建议：全局禁止选中文字 */
+  user-select: none; /* 全局禁止选中文字 */
   -webkit-user-select: none;
 }
 
@@ -36,38 +35,66 @@ body {
   line-height: 1.8;
   overflow-x: hidden;
   transition: filter 1.5s ease;
+  cursor: none; /* 核心区域隐藏系统指针 */
 }
 
-/* 呼吸闪烁层（降低亮度，柔和过渡） */
+/* 恢复交互元素的系统指针 */
+a, button, iframe, .music-card, .agree-btn, .play-btn { cursor: auto !important; }
+
+/* 呼吸闪烁层（亮度降至1.3） */
 body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 @keyframes softBlink { 0% { filter: brightness(1); } 50% { filter: brightness(1.3); } 100% { filter: brightness(1); } }
 
-/* 自定义淡金光晕鼠标（大半径低透明度+呼吸） */
+/* 扫描线动效 */
+#scanline {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998;
+  background: linear-gradient(to bottom, transparent 0%, transparent 49%, rgba(255,255,255,0.03) 50%, transparent 51%, transparent 100%);
+  background-size: 100% 4px;
+  animation: scanlineMove 8s linear infinite;
+}
+@keyframes scanlineMove { 0% { background-position: 0 0; } 100% { background-position: 0 100vh; } }
+
+/* ── 双层光晕鼠标 ── */
 #cursor-glow {
   position: fixed;
-  width: 120px;
-  height: 120px;
-  background: radial-gradient(circle, rgba(232,200,130,0.25) 0%, transparent 70%);
+  width: 70px;
+  height: 70px;
+  background: radial-gradient(circle, rgba(232,200,130,0.4) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
   z-index: 9999;
   transform: translate(-50%, -50%);
-  transition: width 0.2s, height 0.2s;
+  transition: opacity 0.3s;
   animation: glowBreath 2.5s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-@keyframes glowBreath { 0%, 100% { opacity: 0.6; } 50% { opacity: 1.0; } }
+@keyframes glowBreath { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.85; } }
+
+/* 内层实心小点，不参与呼吸，精确对应鼠标位置 */
+#cursor-dot {
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10000;
+}
 
 /* 触控设备恢复默认光标，隐藏自定义光晕 */
 @media (hover: none) and (pointer: coarse) {
   *, *::before, *::after { cursor: auto !important; }
   #cursor-glow { display: none; }
+  body { cursor: auto; }
 }
 
 /* 背景粒子 */
-#particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; opacity: 0.3; }
+#particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; opacity: 0.4; }
 
 /* 页面层级 */
-.page { position: relative; z-index: 1; display: flex; flex-direction: column; }
+.page { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; opacity: 0; transition: opacity 2s ease; }
+.page.visible { opacity: 1; }
 
 /* ── 警告页 (内容A) ── */
 #warning-screen {
@@ -80,7 +107,7 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 .warning-title { font-size: 1.5rem; color: var(--text); letter-spacing: 0.2em; margin-bottom: 2rem; font-weight: bold; }
 .warning-text { font-size: 0.9rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 3rem; max-width: 500px; line-height: 1.6; }
 .warning-btns { display: flex; gap: 4rem; justify-content: center; }
-.agree-btn { background: none; border: 1px solid var(--faint); color: var(--muted); padding: 0.8rem 2rem; font-family: inherit; font-size: 0.8rem; letter-spacing: 0.2em; transition: all 0.3s; cursor: pointer; }
+.agree-btn { background: none; border: 1px solid var(--faint); color: var(--muted); padding: 0.8rem 2rem; font-family: inherit; font-size: 0.8rem; letter-spacing: 0.2em; transition: all 0.3s; }
 .agree-btn:hover { border-color: var(--gold); color: var(--gold); }
 #too-late { font-size: 1.2rem; color: var(--gold); letter-spacing: 0.3em; opacity: 0; transition: opacity 1.5s ease; }
 
@@ -102,7 +129,7 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 
 /* ── 临时编号系统 ── */
 #temp-id {
-  position: fixed; bottom: 20px; right: 20px; z-index: 90; pointer-events: none;
+  position: absolute; bottom: 20px; right: 20px; z-index: 90; pointer-events: none;
   font-size: 0.7rem; color: var(--gold); letter-spacing: 0.1em; 
   text-shadow: 0 0 8px var(--glow); white-space: nowrap;
 }
@@ -122,26 +149,38 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 .section-label { font-size: 0.75rem; letter-spacing: 0.4em; color: var(--gold); margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem; }
 .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-/* 错位卡片网格 & 暗噪点背景 */
-.music-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-@media (min-width: 768px) { 
-    .music-grid { grid-template-columns: 1fr 1fr; } 
-    .music-grid .music-card:nth-child(even) { transform: translateY(30px); } /* 制造错落感 */
+/* ── 音乐区重构 ── */
+.archive-entry {
+  border: 1px solid var(--faint); padding: 1.2rem; text-align: center; color: var(--gold);
+  letter-spacing: 0.1em; font-size: 0.9rem; transition: all 0.3s; margin-bottom: 2rem;
+  background: transparent; width: 100%; font-family: inherit;
 }
-.music-card {
-  background: linear-gradient(135deg, #0a0908 0%, #11100f 100%);
-  border: 1px solid var(--border); padding: 15px; display: flex; flex-direction: column; transition: all 0.3s ease; position: relative;
+.archive-entry:hover { border-color: var(--gold); background: rgba(185, 28, 28, 0.05); }
+
+.archive-list { display: none; flex-direction: column; gap: 0; }
+.archive-list.active { display: flex; }
+
+.track-item {
+  padding: 1.5rem 0; border-bottom: 1px solid var(--border); 
+  opacity: 0; transform: translateY(-20px);
+  transition: opacity 0.5s ease, transform 0.5s ease, background-color 0.3s;
 }
-.music-card::before {
-    content: ''; position: absolute; inset: 0; opacity: 0.03; pointer-events: none;
-    background-image: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
-}
-.music-card:hover { border-color: var(--gold); box-shadow: 0 0 15px rgba(185, 28, 28, 0.15); z-index: 2; }
-.music-title { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 10px; text-align: center; }
-.music-card iframe { width: 100%; height: 150px; border: none; background: transparent; }
+.track-item.visible { opacity: 1; transform: translateY(0); }
+.track-item.playing { background: rgba(232, 200, 130, 0.03); box-shadow: inset 3px 0 0 var(--gold); }
+.track-item:last-child { border-bottom: none; }
+
+.track-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.track-title { font-size: 1.1rem; color: var(--gold); font-weight: bold; display: flex; align-items: center; gap: 0.8rem; }
+.play-btn { background: none; border: 1px solid var(--faint); color: var(--muted); width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; font-size: 0.8rem; }
+.play-btn:hover { border-color: var(--gold); color: var(--gold); }
+.track-meta { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.8rem; }
+.track-meta span { margin-right: 1.5rem; }
+.track-log { font-size: 0.9rem; color: #555; line-height: 1.6; border-left: 2px solid var(--faint); padding-left: 1rem; margin-top: 0.5rem; min-height: 20px; }
+.track-log s { text-decoration: line-through; color: #444; }
+.hidden-audio { display: none; }
 
 /* ── 彩蛋文字层 ── */
-.easter-egg { position: fixed; color: var(--muted); font-size: 0.85rem; pointer-events: none; z-index: 8000; letter-spacing: 0.1em; text-shadow: 0 0 10px rgba(255,255,255,0.1); white-space: nowrap; transform: translate(-50%, -50%); opacity: 0; }
+.easter-egg { position: fixed; color: var(--muted); font-size: 1.2rem; pointer-events: none; z-index: 8000; letter-spacing: 0.1em; text-shadow: 0 0 10px rgba(255,255,255,0.1); white-space: nowrap; transform: translate(-50%, -50%); opacity: 0; }
 .egg-float { animation: floatUp 3s ease-out forwards; }
 .egg-float-fast { animation: floatUp 1.95s ease-out forwards; } /* 快 35% */
 .egg-float-slow { animation: floatUp 4.4s ease-out forwards; } /* 慢 68% */
@@ -164,23 +203,25 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 </head>
 <body>
 
+<!-- 扫描线 -->
+<div id="scanline"></div>
+
 <!-- 警告页 (内容A) -->
 <div id="warning-screen">
   <div class="warning-box" id="warningBox">
     <div class="warning-title">WARNING</div>
     <div class="warning-text">Accessing this archive constitutes voluntary consent to cognitive assessment.</div>
     <div class="warning-btns">
-      <button class="agree-btn" id="agree1">[ I AGREE. ]</button>
-      <button class="agree-btn" id="agree2">[ I AGREE.. ]</button>
+      <button class="agree-btn" id="agree1">[ I AGREE ]</button>
+      <button class="agree-btn" id="agree2">[ I AGREE. ]</button>
     </div>
   </div>
 </div>
 
-<div id="cursor-glow"></div>
-<canvas id="particles"></canvas>
+<!-- 双层光标 -->
+<div id="cursor-glow"><div id="cursor-dot"></div></div>
 
-<!-- 临时编号容器 -->
-<div id="temp-id"></div>
+<canvas id="particles"></canvas>
 
 <div id="opening">
   <div class="opening-symbol">⌬ THEAXIOMWRITER</div>
@@ -200,22 +241,16 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
   </section>
   <div class="divider"></div>
   <section class="music-section" id="musicSec">
-    <div class="section-label">// AUDIO INTERCEPT LOGS</div>
-    <div class="music-grid">
-      <div class="music-card"><div class="music-title">◆ 001 ◆ [LOG_ALPHA]</div><iframe loading="lazy" src="https://suno.com/embed/ARyAzg8v1zp0aY5L"></iframe></div>
-      <div class="music-card"><div class="music-title">◆ 002 ◆ [LOG_BETA]</div><iframe loading="lazy" src="https://suno.com/embed/QKkiMhtXLVzZZY9G"></iframe></div>
-      <div class="music-card"><div class="music-title">◆ 003 ◆ [LOG_GAMMA]</div><iframe loading="lazy" src="https://suno.com/embed/ypxxHhY0uSWp79fU"></iframe></div>
-      <div class="music-card"><div class="music-title">◆ 004 ◆ [LOG_DELTA]</div><iframe loading="lazy" src="https://suno.com/embed/6gmnZ3DjSZDxitpv"></iframe></div>
-      <div class="music-card"><div class="music-title">◆ 005 ◆ [LOG_EPSILON]</div><iframe loading="lazy" src="https://suno.com/embed/0s3WKcBrQdGbjjWZ"></iframe></div>
-      <div class="music-card"><div class="music-title">◆ 006 ◆ [LOG_ZETA]</div><iframe loading="lazy" src="https://suno.com/embed/Hbd35OXuKNqWFVKG"></iframe></div>
-      <div class="music-card"><div class="music-title">◆ 007 ◆ [LOG_ETA]</div><iframe loading="lazy" src="https://suno.com/embed/xSphGvZpusJIEiJt"></iframe></div>
-      <div class="music-card"><div class="music-title">◆ 008 ◆ [LOG_THETA]</div><iframe loading="lazy" src="https://suno.com/embed/DLmBzix4fPULcDgv"></iframe></div>
-    </div>
+    <div class="section-label">// CAPTURED RESIDUAL ECHOES</div>
+    <button class="archive-entry" id="archiveEntry">[ ACCESS AUDIO ARCHIVE — 8 FILES SEALED ]</button>
+    <div class="archive-list" id="archiveList"></div>
   </section>
+  
+  <div id="temp-id"></div>
 </div>
 
-<!-- 无光之人 -->
-<img id="voidling" src="images/voidling-idle.png" alt="" style="left: 80%; top: 80%;">
+<!-- 无光之人 (图片映射: 1=idle, 2=flee, 3=run) -->
+<img id="voidling" src="images/voidling-1.png" alt="" style="left: 80%; top: 80%;">
 
 <script>
 // --- 警告页逻辑 ---
@@ -246,22 +281,135 @@ if (warningSeen) {
     warningScreen.style.display = 'none';
     startMainSiteLogic();
 } else {
-    let warningTimer = setTimeout(triggerTooLate, 10000); // 10秒无操作
+    let warningTimer = setTimeout(triggerTooLate, 10000);
     document.getElementById('agree1').addEventListener('click', () => { clearTimeout(warningTimer); proceedToMainSite(); });
     document.getElementById('agree2').addEventListener('click', () => { clearTimeout(warningTimer); proceedToMainSite(); });
 }
 
+// --- 音乐区数据 (本地MP3接入) ---
+const tracks = [
+    { id: "001", name: "PLASTIC NURSERY", obj: "Object: 000-NEGATION", file: "File No: A-000-甲", log: "Rainbow dripping in a paper cup. Pick the candy, never give it up. Everything is sweet, everything is bright. Until the heavy footsteps echo through the night. So, you are saying this is correct? Denied.", src: "audio/001-plastic-nursery-000-negation.mp3" },
+    { id: "002", name: "THE DOLL RESTORER", obj: "Object: 168-NO REGRETS REMAINING", file: "File No: A-168-乙", log: "Be a good doll. Don't you fight the thread. I'll paint a permanent smile on your face. Listen to me. Freedom is a virus. Thinking is an agony.", src: "audio/002-doll-restorer-168-no-regrets.mp3" },
+    { id: "003", name: "USER MANUAL: YI", obj: "Character: YI SHENG / THEAXIOMWRITER", file: "File No.: A-0000-Alpha", log: "Silence is a luxury you simply cannot afford. Guess who you are looking at? Current state: <s>Elegantly... sipping jasmine tea.</s> No, writing like crazy.", src: "audio/003-user-manual-yi-axw.mp3" },
+    { id: "004", name: "THE BYSTANDER", obj: "Character: LI SIYUAN (THE PLAYER)", file: "File No: A-007-丁", log: "Watching the earth spin, pretending I know the drill. Chewing absurdity like snacks, keeping perfectly still. Zero expectations means no feeling of the fall.", src: "audio/004-bystander-li-siyuan.mp3" },
+    { id: "005", name: "NEW GAME", obj: "Character: ILLIAN VOLOS (NUMBER FOUR)", file: "File No: A-014-戊", log: "New game, same map, different seed. I've run the numbers, checked every door — the devs left one room with no floor. Curiosity is an acceptable variable. Someone has to watch the whole thing play out. What's up, Boss? Another field run? Coming, coming!", src: "audio/005-new-game-illian-volos.mp3" },
+    { id: "006", name: "TREASURE 147", obj: "Object: 076-THE NAMELESS PRISONER", file: "File No: A-076-己", log: "Another day of experiments. They lock me in this perfect steel greenhouse; I am a display piece that cannot die. They enshrine me at the sterile highest point, calculating my daily life with absolute rationality. The cloned dog is still mechanically wagging its tail at my feet.", src: "audio/006-treasure-147-nameless-prisoner.mp3" },
+    { id: "007", name: "ROOT ACCESS", obj: "Character: QIN WAN (CHIEF WRITER)", file: "File No: A-013-庚", log: "You have root access. You always have. You simply forgot to log in. The administrator of this system has only ever been one person. It is you. Don't worry, it's safe here.", src: "audio/007-root-access-qin-wan.mp3" },
+    { id: "008", name: "SAVE FILE OF CHILDHOOD", obj: "Object: 238-DAUGHTER'S BAND-AID", file: "File No: A-238-辛", log: "Childhood's like a glowing sweet, melting on the tongue, bitter-sweet. \"I love Daddy the most!\" \"Daddy's hurt. Does it hurt, Daddy?\" \"Stay sa-fe.\"", src: "audio/008-save-file-childhood-238-band-aid.mp3" }
+];
+
 // --- 核心逻辑启动函数 ---
 function startMainSiteLogic() {
-    // 临时编号生成
+    // 1. 临时编号防重复生成
     const chars = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
-    const c1 = String.fromCharCode(65 + Math.floor(Math.random() * 26));
-    const c2 = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
-    const c3 = chars[Math.floor(Math.random() * chars.length)];
-    document.getElementById('temp-id').innerText = `TEMPORARY CONTAINMENT ID: ${c1}-${c2}-${c3}`;
+    let lastId = sessionStorage.getItem('last_temp_id') || '';
+    let newId = '';
+    do {
+        const c1 = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+        const c2 = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+        const c3 = chars[Math.floor(Math.random() * chars.length)];
+        newId = `TEMPORARY CONTAINMENT ID: ${c1}-${c2}-${c3}`;
+    } while (newId === lastId);
+    sessionStorage.setItem('last_temp_id', newId);
+    document.getElementById('temp-id').innerText = newId;
 
-    // 开屏动画
-    setTimeout(() => { document.getElementById('opening').classList.add('hidden'); }, 3000);
+    // 2. 开屏动画与正文过渡
+    setTimeout(() => { 
+        document.getElementById('opening').classList.add('hidden');
+        document.getElementById('mainContent').classList.add('visible');
+    }, 3000);
+
+    // 3. 音乐区渲染
+    const list = document.getElementById('archiveList');
+    tracks.forEach((t, index) => {
+        let item = document.createElement('div');
+        item.className = 'track-item';
+        item.innerHTML = `
+            <div class="track-header">
+                <div class="track-title">${t.id} · ${t.name}</div>
+                <button class="play-btn" data-index="${index}">▶</button>
+            </div>
+            <div class="track-meta">
+                <span>${t.obj}</span>
+                <span>${t.file}</span>
+            </div>
+            <div class="track-log" id="log-${index}"></div>
+            <audio class="hidden-audio" id="audio-${index}" src="${t.src}"></audio>
+        `;
+        list.appendChild(item);
+    });
+
+    // 4. 展开入口逻辑
+    let isArchiveOpen = false;
+    document.getElementById('archiveEntry').addEventListener('click', function() {
+        isArchiveOpen = !isArchiveOpen;
+        if(isArchiveOpen) {
+            this.innerText = "[ CLOSE AUDIO ARCHIVE ]";
+            list.classList.add('active');
+            // Stagger 动画
+            const items = document.querySelectorAll('.track-item');
+            items.forEach((item, i) => {
+                setTimeout(() => {
+                    item.classList.add('visible');
+                    // 打字机效果
+                    typeWriter(document.getElementById(`log-${i}`), tracks[i].log, 0);
+                }, i * 150); // 延迟递增0.15秒
+            });
+        } else {
+            this.innerText = "[ ACCESS AUDIO ARCHIVE — 8 FILES SEALED ]";
+            list.classList.remove('active');
+            document.querySelectorAll('.track-item').forEach(item => {
+                item.classList.remove('visible');
+            });
+        }
+    });
+
+    // 5. 播放逻辑 (HTML5 Audio)
+    let currentPlaying = null;
+    document.querySelectorAll('.play-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const index = this.dataset.index;
+            const audio = document.getElementById(`audio-${index}`);
+            const item = this.closest('.track-item');
+            
+            // 停止当前播放
+            if(currentPlaying !== null && currentPlaying !== index) {
+                let prevAudio = document.getElementById(`audio-${currentPlaying}`);
+                prevAudio.pause();
+                prevAudio.currentTime = 0;
+                document.querySelector(`.play-btn[data-index="${currentPlaying}"]`).innerText = '▶';
+                document.querySelector(`.track-item:nth-child(${parseInt(currentPlaying)+1})`).classList.remove('playing');
+            }
+
+            if(audio.paused) {
+                audio.play().catch(e => console.error("Audio play failed:", e));
+                this.innerText = '❚❚';
+                item.classList.add('playing');
+                currentPlaying = index;
+            } else {
+                audio.pause();
+                audio.currentTime = 0;
+                this.innerText = '▶';
+                item.classList.remove('playing');
+                currentPlaying = null;
+            }
+        });
+    });
+}
+
+// 打字机效果函数
+function typeWriter(element, text, i) {
+    if (i < text.length) {
+        if (text.charAt(i) === '<') {
+            let closeIndex = text.indexOf('>', i);
+            element.innerHTML += text.substring(i, closeIndex + 1);
+            i = closeIndex + 1;
+        } else {
+            element.innerHTML += text.charAt(i);
+            i++;
+        }
+        setTimeout(() => typeWriter(element, text, i), 30);
+    }
 }
 
 // --- 核心状态 ---
@@ -269,18 +417,21 @@ let isPaused = false;
 let mx = window.innerWidth/2, my = window.innerHeight/2;
 
 // --- 光晕鼠标与触控适配 ---
-const cursor = document.getElementById('cursor-glow');
+const cursorGlow = document.getElementById('cursor-glow');
 function updateMousePos(x, y) {
     mx = x; my = y;
-    if(!isPaused) { cursor.style.left = mx + 'px'; cursor.style.top = my + 'px'; }
+    if(!isPaused) { 
+        cursorGlow.style.left = mx + 'px'; 
+        cursorGlow.style.top = my + 'px'; 
+    }
 }
 document.addEventListener('mousemove', e => updateMousePos(e.clientX, e.clientY));
 document.addEventListener('touchmove', e => {
     if(e.touches.length > 0) updateMousePos(e.touches[0].clientX, e.touches[0].clientY);
 }, { passive: true });
 
-document.addEventListener('mousedown', () => cursor.style.transform = 'translate(-50%, -50%) scale(0.8)');
-document.addEventListener('mouseup', () => cursor.style.transform = 'translate(-50%, -50%) scale(1)');
+document.addEventListener('mousedown', () => cursorGlow.style.transform = 'translate(-50%, -50%) scale(0.8)');
+document.addEventListener('mouseup', () => cursorGlow.style.transform = 'translate(-50%, -50%) scale(1)');
 
 // --- 粒子系统 ---
 const canvas = document.getElementById('particles');
@@ -289,7 +440,7 @@ let particles = [], W, H;
 function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
 resize(); window.addEventListener('resize', resize);
 for (let i = 0; i < 40; i++) {
-  particles.push({ x: Math.random()*W, y: Math.random()*H, s: Math.random()*1.5+0.2, vy: -(Math.random()*0.3+0.05), a: Math.random()*0.4+0.05 });
+  particles.push({ x: Math.random()*W, y: Math.random()*H, s: Math.random()*1.5+0.2, vy: -(Math.random()*0.3+0.05), a: Math.random()*0.6+0.15 });
 }
 function drawParticles() {
   if(!isPaused) {
@@ -309,15 +460,16 @@ let clickCount = 0;
 let audioCtx = null;
 let staticOsc = null;
 
-// 音频解锁与点击逻辑
 document.addEventListener('click', (e) => {
-  // 最前方解锁AudioContext，不绑定clickCount
+  // 确保在任何点击时初始化并解锁 AudioContext
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(err) {}
+  }
   if (audioCtx && audioCtx.state === 'suspended') {
     audioCtx.resume();
   }
 
-  // 扩大排除范围
-  if(e.target.closest('a') || e.target.closest('iframe') || e.target.closest('.bio-card') || e.target.closest('.music-card') || e.target.closest('.section-label') || e.target.closest('button') || e.target.closest('#warning-screen') || e.target.closest('#temp-id')) return;
+  if(e.target.closest('a') || e.target.closest('iframe') || e.target.closest('.bio-card') || e.target.closest('.music-card') || e.target.closest('.section-label') || e.target.closest('button') || e.target.closest('#warning-screen') || e.target.closest('#temp-id') || e.target.closest('.archive-entry') || e.target.closest('.track-item')) return;
   
   clickCount++;
   
@@ -344,14 +496,13 @@ document.addEventListener('click', (e) => {
     return el;
   };
 
-  // 全英文冷峻彩蛋
   if(clickCount === 7) spawnText("WHAT ARE YOU DOING?", "egg-float");
   else if(clickCount === 13) spawnText("STOP.", "egg-float-fast");
   else if(clickCount === 21) spawnText("IS IT REALLY... WORTH IT...?", "egg-float-slow");
   else if(clickCount === 27) spawnText("THE WORLD RUSHES. BUT FEAR NOT. IF YOU WISH, I WILL SINK WITH YOU TO THE BOTTOM.", "", true);
   else if(clickCount === 33) {
     let el = spawnText("YOU ARE CONTAINED. WILLINGLY.", "", true);
-    el.style.transitionDuration = "5s"; // 消散更慢
+    el.style.transitionDuration = "5s";
   }
   else if(clickCount === 40) {
     spawnText("I SEE YOU.", "egg-float");
@@ -365,24 +516,14 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// 触摸端点击支持
-document.addEventListener('touchstart', e => {
-  if(e.touches.length > 0) {
-    let touch = e.touches[0];
-    let evt = new MouseEvent('click', { clientX: touch.clientX, clientY: touch.clientY });
-    // 模拟点击触发彩蛋逻辑（不触发真实点击事件的默认行为）
-    // 为防止重复触发，这里只在特定条件下手动调用逻辑，或者直接依赖click事件在移动端的合成
-  }
-}, { passive: true });
-
-// --- 无光之人 (031) 收容引擎 ---
+// --- 无光之人 (031) ---
 const voidling = document.getElementById('voidling');
-let vState = 'idle'; // idle, flee, cornered, attack, hidden, banished
+let vState = 'idle';
 let vx = window.innerWidth * 0.8, vy = window.innerHeight * 0.8;
 let lastMx = mx, lastMy = my;
 let cornerTrapCount = 0;
+let isShivering = false;
 
-// 持久化与日期戳逻辑
 let today = new Date().toDateString();
 let storedDate = localStorage.getItem('031BanishedDate');
 let banished = false;
@@ -390,14 +531,12 @@ let banished = false;
 if(storedDate === today) {
     banished = localStorage.getItem('031Banished') === 'true';
 } else {
-    // 跨天清理
     localStorage.removeItem('031Banished');
     localStorage.removeItem('031BanishedDate');
 }
 
 if(banished) { voidling.style.display = 'none'; }
 
-// AFK 监测（基于时间戳）
 let lastActiveTime = Date.now();
 let afkCooldown = false;
 
@@ -405,14 +544,13 @@ function resetAfk() {
   lastActiveTime = Date.now();
   if(banished || vState === 'attack' || vState === 'hidden') return;
   voidling.style.opacity = '0.4';
-  voidling.src = 'images/voidling-idle.png';
+  voidling.src = 'images/voidling-1.png'; // Idle
   afkCooldown = false;
 }
 document.addEventListener('mousemove', resetAfk);
 document.addEventListener('touchmove', resetAfk);
 document.addEventListener('touchstart', resetAfk);
 
-// 噪音生成
 function playStatic(play) {
   if(!play && staticOsc) { staticOsc.stop(); staticOsc.disconnect(); staticOsc = null; return; }
   if(play && !staticOsc) {
@@ -435,20 +573,17 @@ function playStatic(play) {
   }
 }
 
-// 核心循环
 function voidlingLoop() {
   if(isPaused || banished || vState === 'hidden' || vState === 'attack') {
     requestAnimationFrame(voidlingLoop); return;
   }
   
-  // AFK 挂机检测逻辑
   if(vState === 'idle' && !afkCooldown && (Date.now() - lastActiveTime > 12000)) {
       afkCooldown = true;
       voidling.style.opacity = '0.8';
-      voidling.src = 'images/voidling-idle.png';
+      voidling.src = 'images/voidling-1.png'; // Idle
       setTimeout(() => {
           if(vState === 'idle') voidling.style.opacity = '0.4';
-          // 4秒后重置冷却，允许下次挂机再触发
           setTimeout(() => { afkCooldown = false; }, 4000);
       }, 4000);
   }
@@ -459,7 +594,7 @@ function voidlingLoop() {
 
   if(dist < 180) {
     vState = 'flee';
-    voidling.src = 'images/voidling-flee.png';
+    voidling.src = 'images/voidling-2.png'; // Flee
     voidling.style.opacity = '0.7';
     
     let angle = Math.atan2(vy - my, vx - mx);
@@ -476,7 +611,7 @@ function voidlingLoop() {
     if(hitCorner && !isShivering) {
       isShivering = true;
       vState = 'cornered';
-      voidling.src = 'images/voidling-idle.png';
+      voidling.src = 'images/voidling-1.png'; // Idle (缩成一团)
       voidling.classList.add('voidling-shiver');
       playStatic(true);
       
@@ -491,7 +626,7 @@ function voidlingLoop() {
   } else {
     if(vState === 'flee') {
       vState = 'idle';
-      voidling.src = 'images/voidling-idle.png';
+      voidling.src = 'images/voidling-1.png'; // Idle
       voidling.style.opacity = '0.4';
     }
   }
@@ -502,11 +637,6 @@ function voidlingLoop() {
 }
 requestAnimationFrame(voidlingLoop);
 
-// --- 暴走反击机制 ---
-let origBioText = "";
-let isShivering = false;
-
-// JS随机震动函数
 function shakeElement(el, duration = 500) {
     let start = Date.now();
     let interval = setInterval(() => {
@@ -522,10 +652,11 @@ function shakeElement(el, duration = 500) {
     }, 40);
 }
 
+let origBioText = "";
 function triggerAttack() {
   if(banished) return;
   vState = 'attack';
-  voidling.src = 'images/voidling-run.png';
+  voidling.src = 'images/voidling-3.png'; // Run/Attack
   
   let bioRect = document.getElementById('bioCard').getBoundingClientRect();
   vx = bioRect.left + 50; vy = bioRect.top - 50;
@@ -534,7 +665,6 @@ function triggerAttack() {
   let mode = Math.random() > 0.5 ? 'swap' : 'scramble';
   
   setTimeout(() => {
-    // 使用JS随机抖动替代CSS动画
     shakeElement(document.getElementById('bioCard'), 500);
     playStatic(true);
     
@@ -577,7 +707,6 @@ function scrambleString(str) {
   return arr.join('');
 }
 
-// --- Axiom 重构 ---
 function triggerAxiomRestore(mode) {
   let waitTime = 6000 + Math.random() * 5000;
   setTimeout(() => {
