@@ -35,7 +35,7 @@ body {
   line-height: 1.8;
   overflow-x: hidden;
   transition: filter 1.5s ease;
-  cursor: auto; /* 恢复系统默认指针 */
+  cursor: none;
 }
 
 a, button, iframe, .music-card, .agree-btn, .play-btn { cursor: auto !important; }
@@ -285,7 +285,7 @@ if (canvas) {
         vy: -(Math.random()*0.6+0.05),
         vx: (Math.random()-0.5)*0.3,
         a: Math.random()*0.5+0.2,
-        life: Math.random()*200+100,
+        life: Math.random()*500+400,
         age: 0,
         color: Math.random() > 0.5 ? '185,28,28' : '212,175,110'
       });
@@ -299,7 +299,7 @@ if (canvas) {
           let fade = 1 - (p.age / p.life);
           if(fade <= 0 || p.y < -10) {
             p.x = Math.random()*W; p.y = H + Math.random()*50;
-            p.age = 0; p.life = Math.random()*200+100;
+            p.age = 0; p.life = Math.random()*500+400;
             fade = 1;
           }
           ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
@@ -406,7 +406,7 @@ function startMainSiteLogic() {
         const c1 = String.fromCharCode(65 + Math.floor(Math.random() * 26));
         const c2 = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
         const c3 = chars[Math.floor(Math.random() * chars.length)];
-        newId = `TEMPORARY CONTAINMENT ID: ${c1}-${c2}-${c3}`;
+        newId = `TEMPORARY·CONTAINMENT·ID:${c1}-${c2}-${c3}`;
     } while (newId === lastId);
     sessionStorage.setItem('last_temp_id', newId);
     
