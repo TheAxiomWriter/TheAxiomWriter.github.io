@@ -253,174 +253,22 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 <img id="voidling" src="images/voidling-1.png" alt="" style="left: 80%; top: 80%;">
 
 <script>
-// --- 警告页逻辑 ---
-const warningSeen = localStorage.getItem('axiom_warning_seen') === 'true';
-const warningScreen = document.getElementById('warning-screen');
-const warningBox = document.getElementById('warningBox');
-
-function proceedToMainSite() {
-    localStorage.setItem('axiom_warning_seen', 'true');
-    warningScreen.classList.add('hidden');
-    startMainSiteLogic();
-}
-
-function triggerTooLate() {
-    warningBox.style.opacity = '0';
-    setTimeout(() => {
-        warningBox.style.display = 'none';
-        let p = document.createElement('div');
-        p.id = 'too-late';
-        p.innerText = 'Too late.';
-        warningScreen.appendChild(p);
-        setTimeout(() => { p.style.opacity = '1'; }, 50);
-        setTimeout(() => { proceedToMainSite(); }, 2500);
-    }, 1000);
-}
-
-if (warningSeen) {
-    warningScreen.style.display = 'none';
-    startMainSiteLogic();
-} else {
-    let warningTimer = setTimeout(triggerTooLate, 10000);
-    document.getElementById('agree1').addEventListener('click', () => { clearTimeout(warningTimer); proceedToMainSite(); });
-    document.getElementById('agree2').addEventListener('click', () => { clearTimeout(warningTimer); proceedToMainSite(); });
-}
-
-// --- 音乐区数据 (本地MP3接入) ---
-const tracks = [
-    { id: "001", name: "PLASTIC NURSERY", obj: "Object: 000-NEGATION", file: "File No: A-000-甲", log: "Rainbow dripping in a paper cup. Pick the candy, never give it up. Everything is sweet, everything is bright. Until the heavy footsteps echo through the night. So, you are saying this is correct? Denied.", src: "audio/001-plastic-nursery-000-negation.mp3" },
-    { id: "002", name: "THE DOLL RESTORER", obj: "Object: 168-NO REGRETS REMAINING", file: "File No: A-168-乙", log: "Be a good doll. Don't you fight the thread. I'll paint a permanent smile on your face. Listen to me. Freedom is a virus. Thinking is an agony.", src: "audio/002-doll-restorer-168-no-regrets.mp3" },
-    { id: "003", name: "USER MANUAL: YI", obj: "Character: YI SHENG / THEAXIOMWRITER", file: "File No.: A-0000-Alpha", log: "Silence is a luxury you simply cannot afford. Guess who you are looking at? Current state: <s>Elegantly... sipping jasmine tea.</s> No, writing like crazy.", src: "audio/003-user-manual-yi-axw.mp3" },
-    { id: "004", name: "THE BYSTANDER", obj: "Character: LI SIYUAN (THE PLAYER)", file: "File No: A-007-丁", log: "Watching the earth spin, pretending I know the drill. Chewing absurdity like snacks, keeping perfectly still. Zero expectations means no feeling of the fall.", src: "audio/004-bystander-li-siyuan.mp3" },
-    { id: "005", name: "NEW GAME", obj: "Character: ILLIAN VOLOS (NUMBER FOUR)", file: "File No: A-014-戊", log: "New game, same map, different seed. I've run the numbers, checked every door — the devs left one room with no floor. Curiosity is an acceptable variable. Someone has to watch the whole thing play out. What's up, Boss? Another field run? Coming, coming!", src: "audio/005-new-game-illian-volos.mp3" },
-    { id: "006", name: "TREASURE 147", obj: "Object: 076-THE NAMELESS PRISONER", file: "File No: A-076-己", log: "Another day of experiments. They lock me in this perfect steel greenhouse; I am a display piece that cannot die. They enshrine me at the sterile highest point, calculating my daily life with absolute rationality. The cloned dog is still mechanically wagging its tail at my feet.", src: "audio/006-treasure-147-nameless-prisoner.mp3" },
-    { id: "007", name: "ROOT ACCESS", obj: "Character: QIN WAN (CHIEF WRITER)", file: "File No: A-013-庚", log: "You have root access. You always have. You simply forgot to log in. The administrator of this system has only ever been one person. It is you. Don't worry, it's safe here.", src: "audio/007-root-access-qin-wan.mp3" },
-    { id: "008", name: "SAVE FILE OF CHILDHOOD", obj: "Object: 238-DAUGHTER'S BAND-AID", file: "File No: A-238-辛", log: "Childhood's like a glowing sweet, melting on the tongue, bitter-sweet. \"I love Daddy the most!\" \"Daddy's hurt. Does it hurt, Daddy?\" \"Stay sa-fe.\"", src: "audio/008-save-file-childhood-238-band-aid.mp3" }
-];
-
-// --- 核心逻辑启动函数 ---
-function startMainSiteLogic() {
-    // 1. 临时编号防重复生成
-    const chars = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
-    let lastId = sessionStorage.getItem('last_temp_id') || '';
-    let newId = '';
-    do {
-        const c1 = String.fromCharCode(65 + Math.floor(Math.random() * 26));
-        const c2 = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
-        const c3 = chars[Math.floor(Math.random() * chars.length)];
-        newId = `TEMPORARY CONTAINMENT ID: ${c1}-${c2}-${c3}`;
-    } while (newId === lastId);
-    sessionStorage.setItem('last_temp_id', newId);
-    document.getElementById('temp-id').innerText = newId;
-
-    // 2. 开屏动画与正文过渡
-    setTimeout(() => { 
-        document.getElementById('opening').classList.add('hidden');
-        document.getElementById('mainContent').classList.add('visible');
-    }, 3000);
-
-    // 3. 音乐区渲染
-    const list = document.getElementById('archiveList');
-    tracks.forEach((t, index) => {
-        let item = document.createElement('div');
-        item.className = 'track-item';
-        item.innerHTML = `
-            <div class="track-header">
-                <div class="track-title">${t.id} · ${t.name}</div>
-                <button class="play-btn" data-index="${index}">▶</button>
-            </div>
-            <div class="track-meta">
-                <span>${t.obj}</span>
-                <span>${t.file}</span>
-            </div>
-            <div class="track-log" id="log-${index}"></div>
-            <audio class="hidden-audio" id="audio-${index}" src="${t.src}"></audio>
-        `;
-        list.appendChild(item);
-    });
-
-    // 4. 展开入口逻辑
-    let isArchiveOpen = false;
-    document.getElementById('archiveEntry').addEventListener('click', function() {
-        isArchiveOpen = !isArchiveOpen;
-        if(isArchiveOpen) {
-            this.innerText = "[ CLOSE AUDIO ARCHIVE ]";
-            list.classList.add('active');
-            // Stagger 动画
-            const items = document.querySelectorAll('.track-item');
-            items.forEach((item, i) => {
-                setTimeout(() => {
-                    item.classList.add('visible');
-                    // 打字机效果
-                    typeWriter(document.getElementById(`log-${i}`), tracks[i].log, 0);
-                }, i * 150); // 延迟递增0.15秒
-            });
-        } else {
-            this.innerText = "[ ACCESS AUDIO ARCHIVE — 8 FILES SEALED ]";
-            list.classList.remove('active');
-            document.querySelectorAll('.track-item').forEach(item => {
-                item.classList.remove('visible');
-            });
-        }
-    });
-
-    // 5. 播放逻辑 (HTML5 Audio)
-    let currentPlaying = null;
-    document.querySelectorAll('.play-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const index = this.dataset.index;
-            const audio = document.getElementById(`audio-${index}`);
-            const item = this.closest('.track-item');
-            
-            // 停止当前播放
-            if(currentPlaying !== null && currentPlaying !== index) {
-                let prevAudio = document.getElementById(`audio-${currentPlaying}`);
-                prevAudio.pause();
-                prevAudio.currentTime = 0;
-                document.querySelector(`.play-btn[data-index="${currentPlaying}"]`).innerText = '▶';
-                document.querySelector(`.track-item:nth-child(${parseInt(currentPlaying)+1})`).classList.remove('playing');
-            }
-
-            if(audio.paused) {
-                audio.play().catch(e => console.error("Audio play failed:", e));
-                this.innerText = '❚❚';
-                item.classList.add('playing');
-                currentPlaying = index;
-            } else {
-                audio.pause();
-                audio.currentTime = 0;
-                this.innerText = '▶';
-                item.classList.remove('playing');
-                currentPlaying = null;
-            }
-        });
-    });
-}
-
-// 打字机效果函数
-function typeWriter(element, text, i) {
-    if (i < text.length) {
-        if (text.charAt(i) === '<') {
-            let closeIndex = text.indexOf('>', i);
-            element.innerHTML += text.substring(i, closeIndex + 1);
-            i = closeIndex + 1;
-        } else {
-            element.innerHTML += text.charAt(i);
-            i++;
-        }
-        setTimeout(() => typeWriter(element, text, i), 30);
-    }
-}
+// ═══════════════════════════════════════════════
+// 核心引擎区 (无条件执行，不受任何逻辑影响)
+// ═══════════════════════════════════════════════
 
 // --- 核心状态 ---
 let isPaused = false;
 let mx = window.innerWidth/2, my = window.innerHeight/2;
+let audioCtx = null;
+let staticOsc = null;
+let clickCount = 0;
 
-// --- 光晕鼠标与触控适配 ---
+// --- 1. 光晕鼠标与触控适配 ---
 const cursorGlow = document.getElementById('cursor-glow');
 function updateMousePos(x, y) {
     mx = x; my = y;
-    if(!isPaused) { 
+    if(!isPaused && cursorGlow) { 
         cursorGlow.style.left = mx + 'px'; 
         cursorGlow.style.top = my + 'px'; 
     }
@@ -430,93 +278,37 @@ document.addEventListener('touchmove', e => {
     if(e.touches.length > 0) updateMousePos(e.touches[0].clientX, e.touches[0].clientY);
 }, { passive: true });
 
-document.addEventListener('mousedown', () => cursorGlow.style.transform = 'translate(-50%, -50%) scale(0.8)');
-document.addEventListener('mouseup', () => cursorGlow.style.transform = 'translate(-50%, -50%) scale(1)');
+if (cursorGlow) {
+    document.addEventListener('mousedown', () => cursorGlow.style.transform = 'translate(-50%, -50%) scale(0.8)');
+    document.addEventListener('mouseup', () => cursorGlow.style.transform = 'translate(-50%, -50%) scale(1)');
+}
 
-// --- 粒子系统 ---
+// --- 2. 粒子系统 ---
 const canvas = document.getElementById('particles');
-const ctx = canvas.getContext('2d');
-let particles = [], W, H;
-function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
-resize(); window.addEventListener('resize', resize);
-for (let i = 0; i < 40; i++) {
-  particles.push({ x: Math.random()*W, y: Math.random()*H, s: Math.random()*1.5+0.2, vy: -(Math.random()*0.3+0.05), a: Math.random()*0.6+0.15 });
-}
-function drawParticles() {
-  if(!isPaused) {
-    ctx.clearRect(0, 0, W, H);
-    particles.forEach(p => {
-      p.y += p.vy; if(p.y < -10) p.y = H + 10;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(200, 200, 200, ${p.a})`; ctx.fill();
-    });
-  }
-  requestAnimationFrame(drawParticles);
-}
-drawParticles();
-
-// --- 点击彩蛋序列 ---
-let clickCount = 0;
-let audioCtx = null;
-let staticOsc = null;
-
-document.addEventListener('click', (e) => {
-  // 确保在任何点击时初始化并解锁 AudioContext
-  if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(err) {}
-  }
-  if (audioCtx && audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-
-  if(e.target.closest('a') || e.target.closest('iframe') || e.target.closest('.bio-card') || e.target.closest('.music-card') || e.target.closest('.section-label') || e.target.closest('button') || e.target.closest('#warning-screen') || e.target.closest('#temp-id') || e.target.closest('.archive-entry') || e.target.closest('.track-item')) return;
-  
-  clickCount++;
-  
-  const spawnText = (text, animClass, typeWriter = false) => {
-    let el = document.createElement('div');
-    el.className = `easter-egg ${animClass}`;
-    el.style.left = e.clientX + 'px'; el.style.top = e.clientY + 'px';
-    document.body.appendChild(el);
-    
-    if(typeWriter) {
-      el.classList.add('egg-sink');
-      let i = 0;
-      let timer = setInterval(() => {
-        el.textContent += text.charAt(i); i++;
-        if(i >= text.length) { 
-            clearInterval(timer);
-            setTimeout(() => { el.classList.add('fade'); setTimeout(()=>el.remove(), 3000); }, 2000);
-        }
-      }, 100);
-    } else {
-      el.textContent = text;
-      setTimeout(() => el.remove(), 5000);
+if (canvas) {
+    const ctx = canvas.getContext('2d');
+    let particles = [], W, H;
+    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+    resize(); 
+    window.addEventListener('resize', resize);
+    for (let i = 0; i < 40; i++) {
+      particles.push({ x: Math.random()*W, y: Math.random()*H, s: Math.random()*1.5+0.2, vy: -(Math.random()*0.3+0.05), a: Math.random()*0.6+0.15 });
     }
-    return el;
-  };
+    function drawParticles() {
+      if(!isPaused) {
+        ctx.clearRect(0, 0, W, H);
+        particles.forEach(p => {
+          p.y += p.vy; if(p.y < -10) p.y = H + 10;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(200, 200, 200, ${p.a})`; ctx.fill();
+        });
+      }
+      requestAnimationFrame(drawParticles);
+    }
+    drawParticles();
+}
 
-  if(clickCount === 7) spawnText("WHAT ARE YOU DOING?", "egg-float");
-  else if(clickCount === 13) spawnText("STOP.", "egg-float-fast");
-  else if(clickCount === 21) spawnText("IS IT REALLY... WORTH IT...?", "egg-float-slow");
-  else if(clickCount === 27) spawnText("THE WORLD RUSHES. BUT FEAR NOT. IF YOU WISH, I WILL SINK WITH YOU TO THE BOTTOM.", "", true);
-  else if(clickCount === 33) {
-    let el = spawnText("YOU ARE CONTAINED. WILLINGLY.", "", true);
-    el.style.transitionDuration = "5s";
-  }
-  else if(clickCount === 40) {
-    spawnText("I SEE YOU.", "egg-float");
-    isPaused = true;
-    setTimeout(() => { isPaused = false; }, 3000);
-  }
-  else if(clickCount === 48) {
-    spawnText("COME.", "egg-float");
-    document.body.classList.add('blink-soft');
-    setTimeout(() => document.body.classList.remove('blink-soft'), 1500);
-  }
-});
-
-// --- 无光之人 (031) ---
+// --- 3. 无光之人 (031) ---
 const voidling = document.getElementById('voidling');
 let vState = 'idle';
 let vx = window.innerWidth * 0.8, vy = window.innerHeight * 0.8;
@@ -535,14 +327,14 @@ if(storedDate === today) {
     localStorage.removeItem('031BanishedDate');
 }
 
-if(banished) { voidling.style.display = 'none'; }
+if(banished && voidling) { voidling.style.display = 'none'; }
 
 let lastActiveTime = Date.now();
 let afkCooldown = false;
 
 function resetAfk() {
   lastActiveTime = Date.now();
-  if(banished || vState === 'attack' || vState === 'hidden') return;
+  if(banished || vState === 'attack' || vState === 'hidden' || !voidling) return;
   voidling.style.opacity = '0.4';
   voidling.src = 'images/voidling-1.png'; // Idle
   afkCooldown = false;
@@ -569,12 +361,12 @@ function playStatic(play) {
       gain.gain.value = 0.03;
       staticOsc.connect(gain); gain.connect(audioCtx.destination);
       staticOsc.start();
-    } catch(e) {}
+    } catch(e) { console.error("Audio static failed:", e); }
   }
 }
 
 function voidlingLoop() {
-  if(isPaused || banished || vState === 'hidden' || vState === 'attack') {
+  if(isPaused || banished || vState === 'hidden' || vState === 'attack' || !voidling) {
     requestAnimationFrame(voidlingLoop); return;
   }
   
@@ -638,6 +430,7 @@ function voidlingLoop() {
 requestAnimationFrame(voidlingLoop);
 
 function shakeElement(el, duration = 500) {
+    if(!el) return;
     let start = Date.now();
     let interval = setInterval(() => {
         let elapsed = Date.now() - start;
@@ -654,27 +447,33 @@ function shakeElement(el, duration = 500) {
 
 let origBioText = "";
 function triggerAttack() {
-  if(banished) return;
+  if(banished || !voidling) return;
   vState = 'attack';
   voidling.src = 'images/voidling-3.png'; // Run/Attack
   
-  let bioRect = document.getElementById('bioCard').getBoundingClientRect();
+  let bioCard = document.getElementById('bioCard');
+  if(!bioCard) return;
+  
+  let bioRect = bioCard.getBoundingClientRect();
   vx = bioRect.left + 50; vy = bioRect.top - 50;
   voidling.style.left = vx + 'px'; voidling.style.top = vy + 'px';
   
   let mode = Math.random() > 0.5 ? 'swap' : 'scramble';
   
   setTimeout(() => {
-    shakeElement(document.getElementById('bioCard'), 500);
+    shakeElement(bioCard, 500);
     playStatic(true);
     
     if(mode === 'swap') {
-      document.getElementById('bioSec').style.order = "6";
+      let bioSec = document.getElementById('bioSec');
+      if(bioSec) bioSec.style.order = "6";
     } else {
       let bioEl = document.getElementById('bioText');
-      origBioText = bioEl.innerText;
-      bioEl.innerText = scrambleString(origBioText);
-      bioEl.classList.add('glitch-text');
+      if(bioEl) {
+        origBioText = bioEl.innerText;
+        bioEl.innerText = scrambleString(origBioText);
+        bioEl.classList.add('glitch-text');
+      }
     }
     
     setTimeout(() => playStatic(false), 500);
@@ -711,25 +510,259 @@ function triggerAxiomRestore(mode) {
   let waitTime = 6000 + Math.random() * 5000;
   setTimeout(() => {
     let title = document.getElementById('axiomTitle');
-    title.classList.add('restoring');
+    if(title) title.classList.add('restoring');
     
     setTimeout(() => {
       if(mode === 'swap') {
-        document.getElementById('bioSec').style.order = "3";
+        let bioSec = document.getElementById('bioSec');
+        if(bioSec) bioSec.style.order = "3";
       } else {
         let bioEl = document.getElementById('bioText');
-        bioEl.classList.remove('glitch-text');
-        bioEl.innerText = origBioText;
+        if(bioEl) {
+          bioEl.classList.remove('glitch-text');
+          bioEl.innerText = origBioText;
+        }
       }
       
       document.body.classList.add('blink-soft');
       setTimeout(() => {
         document.body.classList.remove('blink-soft');
-        title.classList.remove('restoring');
+        if(title) title.classList.remove('restoring');
       }, 1500);
       
     }, 2000);
   }, waitTime);
+}
+
+// --- 4. 全局点击与彩蛋系统 (独立运行) ---
+document.addEventListener('click', (e) => {
+  // 确保在任何点击时初始化并解锁 AudioContext
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(err) {}
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+
+  if(e.target.closest('a') || e.target.closest('iframe') || e.target.closest('.bio-card') || e.target.closest('.music-card') || e.target.closest('.section-label') || e.target.closest('button') || e.target.closest('#warning-screen') || e.target.closest('#temp-id') || e.target.closest('.archive-entry') || e.target.closest('.track-item')) return;
+  
+  clickCount++;
+  
+  const spawnText = (text, animClass, typeWriter = false) => {
+    let el = document.createElement('div');
+    el.className = `easter-egg ${animClass}`;
+    el.style.left = e.clientX + 'px'; el.style.top = e.clientY + 'px';
+    document.body.appendChild(el);
+    
+    if(typeWriter) {
+      el.classList.add('egg-sink');
+      let i = 0;
+      let timer = setInterval(() => {
+        el.textContent += text.charAt(i); i++;
+        if(i >= text.length) { 
+            clearInterval(timer);
+            setTimeout(() => { el.classList.add('fade'); setTimeout(()=>el.remove(), 3000); }, 2000);
+        }
+      }, 100);
+    } else {
+      el.textContent = text;
+      setTimeout(() => el.remove(), 5000);
+    }
+    return el;
+  };
+
+  if(clickCount === 7) spawnText("WHAT ARE YOU DOING?", "egg-float");
+  else if(clickCount === 13) spawnText("STOP.", "egg-float-fast");
+  else if(clickCount === 21) spawnText("IS IT REALLY... WORTH IT...?", "egg-float-slow");
+  else if(clickCount === 27) spawnText("THE WORLD RUSHES. BUT FEAR NOT. IF YOU WISH, I WILL SINK WITH YOU TO THE BOTTOM.", "", true);
+  else if(clickCount === 33) {
+    let el = spawnText("YOU ARE CONTAINED. WILLINGLY.", "", true);
+    el.style.transitionDuration = "5s";
+  }
+  else if(clickCount === 40) {
+    spawnText("I SEE YOU.", "egg-float");
+    isPaused = true;
+    setTimeout(() => { isPaused = false; }, 3000);
+  }
+  else if(clickCount === 48) {
+    spawnText("COME.", "egg-float");
+    document.body.classList.add('blink-soft');
+    setTimeout(() => document.body.classList.remove('blink-soft'), 1500);
+  }
+});
+
+
+// ═══════════════════════════════════════════════
+// UI 逻辑区 (包裹在 try...catch 中，容错隔离)
+// ═══════════════════════════════════════════════
+
+const tracks = [
+    { id: "001", name: "PLASTIC NURSERY", obj: "Object: 000-NEGATION", file: "File No: A-000-甲", log: "Rainbow dripping in a paper cup. Pick the candy, never give it up. Everything is sweet, everything is bright. Until the heavy footsteps echo through the night. So, you are saying this is correct? Denied.", src: "audio/001-plastic-nursery-000-negation.mp3" },
+    { id: "002", name: "THE DOLL RESTORER", obj: "Object: 168-NO REGRETS REMAINING", file: "File No: A-168-乙", log: "Be a good doll. Don't you fight the thread. I'll paint a permanent smile on your face. Listen to me. Freedom is a virus. Thinking is an agony.", src: "audio/002-doll-restorer-168-no-regrets.mp3" },
+    { id: "003", name: "USER MANUAL: YI", obj: "Character: YI SHENG / THEAXIOMWRITER", file: "File No.: A-0000-Alpha", log: "Silence is a luxury you simply cannot afford. Guess who you are looking at? Current state: <s>Elegantly... sipping jasmine tea.</s> No, writing like crazy.", src: "audio/003-user-manual-yi-axw.mp3" },
+    { id: "004", name: "THE BYSTANDER", obj: "Character: LI SIYUAN (THE PLAYER)", file: "File No: A-007-丁", log: "Watching the earth spin, pretending I know the drill. Chewing absurdity like snacks, keeping perfectly still. Zero expectations means no feeling of the fall.", src: "audio/004-bystander-li-siyuan.mp3" },
+    { id: "005", name: "NEW GAME", obj: "Character: ILLIAN VOLOS (NUMBER FOUR)", file: "File No: A-014-戊", log: "New game, same map, different seed. I've run the numbers, checked every door — the devs left one room with no floor. Curiosity is an acceptable variable. Someone has to watch the whole thing play out. What's up, Boss? Another field run? Coming, coming!", src: "audio/005-new-game-illian-volos.mp3" },
+    { id: "006", name: "TREASURE 147", obj: "Object: 076-THE NAMELESS PRISONER", file: "File No: A-076-己", log: "Another day of experiments. They lock me in this perfect steel greenhouse; I am a display piece that cannot die. They enshrine me at the sterile highest point, calculating my daily life with absolute rationality. The cloned dog is still mechanically wagging its tail at my feet.", src: "audio/006-treasure-147-nameless-prisoner.mp3" },
+    { id: "007", name: "ROOT ACCESS", obj: "Character: QIN WAN (CHIEF WRITER)", file: "File No: A-013-庚", log: "You have root access. You always have. You simply forgot to log in. The administrator of this system has only ever been one person. It is you. Don't worry, it's safe here.", src: "audio/007-root-access-qin-wan.mp3" },
+    { id: "008", name: "SAVE FILE OF CHILDHOOD", obj: "Object: 238-DAUGHTER'S BAND-AID", file: "File No: A-238-辛", log: "Childhood's like a glowing sweet, melting on the tongue, bitter-sweet. \"I love Daddy the most!\" \"Daddy's hurt. Does it hurt, Daddy?\" \"Stay sa-fe.\"", src: "audio/008-save-file-childhood-238-band-aid.mp3" }
+];
+
+function typeWriter(element, text, i) {
+    if (element && i < text.length) {
+        if (text.charAt(i) === '<') {
+            let closeIndex = text.indexOf('>', i);
+            element.innerHTML += text.substring(i, closeIndex + 1);
+            i = closeIndex + 1;
+        } else {
+            element.innerHTML += text.charAt(i);
+            i++;
+        }
+        setTimeout(() => typeWriter(element, text, i), 30);
+    }
+}
+
+function startMainSiteLogic() {
+  try {
+    // 1. 临时编号防重复生成
+    const chars = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+    let lastId = sessionStorage.getItem('last_temp_id') || '';
+    let newId = '';
+    do {
+        const c1 = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+        const c2 = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+        const c3 = chars[Math.floor(Math.random() * chars.length)];
+        newId = `TEMPORARY CONTAINMENT ID: ${c1}-${c2}-${c3}`;
+    } while (newId === lastId);
+    sessionStorage.setItem('last_temp_id', newId);
+    
+    const tempIdEl = document.getElementById('temp-id');
+    if (tempIdEl) tempIdEl.innerText = newId;
+
+    // 2. 开屏动画与正文过渡
+    setTimeout(() => { 
+        const opening = document.getElementById('opening');
+        const mainContent = document.getElementById('mainContent');
+        if (opening) opening.classList.add('hidden');
+        if (mainContent) mainContent.classList.add('visible');
+    }, 3000);
+
+    // 3. 音乐区渲染
+    const list = document.getElementById('archiveList');
+    if (!list) throw new Error("Archive list element not found");
+    
+    list.innerHTML = ''; // 清空，防止重复
+    tracks.forEach((t, index) => {
+        let item = document.createElement('div');
+        item.className = 'track-item';
+        item.innerHTML = `
+            <div class="track-header">
+                <div class="track-title">${t.id} · ${t.name}</div>
+                <button class="play-btn" data-index="${index}">▶</button>
+            </div>
+            <div class="track-meta">
+                <span>${t.obj}</span>
+                <span>${t.file}</span>
+            </div>
+            <div class="track-log" id="log-${index}"></div>
+            <audio class="hidden-audio" id="audio-${index}" src="${t.src}"></audio>
+        `;
+        list.appendChild(item);
+    });
+
+    // 4. 展开入口逻辑
+    let isArchiveOpen = false;
+    const archiveEntryBtn = document.getElementById('archiveEntry');
+    if (archiveEntryBtn) {
+        archiveEntryBtn.addEventListener('click', function() {
+            isArchiveOpen = !isArchiveOpen;
+            if(isArchiveOpen) {
+                this.innerText = "[ CLOSE AUDIO ARCHIVE ]";
+                list.classList.add('active');
+                const items = document.querySelectorAll('.track-item');
+                items.forEach((item, i) => {
+                    setTimeout(() => {
+                        item.classList.add('visible');
+                        typeWriter(document.getElementById(`log-${i}`), tracks[i].log, 0);
+                    }, i * 150);
+                });
+            } else {
+                this.innerText = "[ ACCESS AUDIO ARCHIVE — 8 FILES SEALED ]";
+                list.classList.remove('active');
+                document.querySelectorAll('.track-item').forEach(item => {
+                    item.classList.remove('visible');
+                });
+            }
+        });
+    }
+
+    // 5. 播放逻辑 (HTML5 Audio)
+    let currentPlaying = null;
+    document.querySelectorAll('.play-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const index = this.dataset.index;
+            const audio = document.getElementById(`audio-${index}`);
+            const item = this.closest('.track-item');
+            
+            if(currentPlaying !== null && currentPlaying !== index) {
+                let prevAudio = document.getElementById(`audio-${currentPlaying}`);
+                prevAudio.pause();
+                prevAudio.currentTime = 0;
+                document.querySelector(`.play-btn[data-index="${currentPlaying}"]`).innerText = '▶';
+                document.querySelector(`.track-item:nth-child(${parseInt(currentPlaying)+1})`).classList.remove('playing');
+            }
+
+            if(audio.paused) {
+                audio.play().catch(e => console.error("Audio play failed:", e));
+                this.innerText = '❚❚';
+                item.classList.add('playing');
+                currentPlaying = index;
+            } else {
+                audio.pause();
+                audio.currentTime = 0;
+                this.innerText = '▶';
+                item.classList.remove('playing');
+                currentPlaying = null;
+            }
+        });
+    });
+  } catch (err) {
+      console.error("Error in startMainSiteLogic:", err);
+  }
+}
+
+// --- 警告页逻辑 ---
+const warningSeen = localStorage.getItem('axiom_warning_seen') === 'true';
+const warningScreen = document.getElementById('warning-screen');
+const warningBox = document.getElementById('warningBox');
+
+function proceedToMainSite() {
+    localStorage.setItem('axiom_warning_seen', 'true');
+    if (warningScreen) warningScreen.classList.add('hidden');
+    startMainSiteLogic();
+}
+
+function triggerTooLate() {
+    if (warningBox) warningBox.style.opacity = '0';
+    setTimeout(() => {
+        if (warningBox) warningBox.style.display = 'none';
+        let p = document.createElement('div');
+        p.id = 'too-late';
+        p.innerText = 'Too late.';
+        if (warningScreen) warningScreen.appendChild(p);
+        setTimeout(() => { p.style.opacity = '1'; }, 50);
+        setTimeout(() => { proceedToMainSite(); }, 2500);
+    }, 1000);
+}
+
+if (warningSeen) {
+    if (warningScreen) warningScreen.style.display = 'none';
+    startMainSiteLogic();
+} else {
+    let warningTimer = setTimeout(triggerTooLate, 10000);
+    const agree1 = document.getElementById('agree1');
+    const agree2 = document.getElementById('agree2');
+    if (agree1) agree1.addEventListener('click', () => { clearTimeout(warningTimer); proceedToMainSite(); });
+    if (agree2) agree2.addEventListener('click', () => { clearTimeout(warningTimer); proceedToMainSite(); });
 }
 
 </script>
