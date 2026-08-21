@@ -23,9 +23,12 @@
   padding: 0; 
   user-select: none;
   -webkit-user-select: none;
+  cursor: none !important;
 }
 
-html { scroll-behavior: smooth; }
+html, body {
+  cursor: none !important;
+}
 
 body {
   background: var(--black);
@@ -34,14 +37,7 @@ body {
   font-size: 16px;
   line-height: 1.8;
   overflow-x: hidden;
-  transition: filter 1.5s ease;
-  cursor: none;
 }
-
-a, button, iframe, .music-card, .agree-btn, .play-btn { cursor: auto !important; }
-
-body.blink-soft { animation: softBlink 1.5s ease-in-out; }
-@keyframes softBlink { 0% { filter: brightness(1); } 50% { filter: brightness(1.3); } 100% { filter: brightness(1); } }
 
 #scanline {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998;
@@ -51,37 +47,40 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 }
 @keyframes scanlineMove { 0% { background-position: 0 0; } 100% { background-position: 0 100vh; } }
 
-/* ── 双层光晕鼠标 ── */
-#cursor-glow {
+/* ── 自定义指针 (实时跟随 + SVG 轮廓发光 + 按压形变) ── */
+#custom-cursor {
   position: fixed;
-  width: 70px;
-  height: 70px;
-  background: radial-gradient(circle, rgba(232,200,130,0.85) 0%, transparent 70%);
-  border-radius: 50%;
+  top: 0;
+  left: 0;
   pointer-events: none;
-  z-index: 9999;
-  transform: translate(-50%, -50%);
-  transition: opacity 0.3s;
-  animation: glowBreath 2.5s ease-in-out infinite;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  z-index: 99999;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
 }
-@keyframes glowBreath { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.6; } }
 
-#cursor-dot {
-  width: 6px;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 10000;
+#custom-cursor svg {
+  transition: transform 0.12s ease;
+}
+
+#custom-cursor.active svg {
+  transform: scale(0.88);
+}
+
+.mimo-glow-layer {
+  animation: mimo-breathe-glow 4.5s ease-in-out infinite;
+}
+@keyframes mimo-breathe-glow {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.65; }
+}
+
+#custom-cursor.active .mimo-glow-layer {
+  opacity: 0.9;
+  animation-play-state: paused;
 }
 
 @media (hover: none) and (pointer: coarse) {
-  *, *::before, *::after { cursor: auto !important; }
-  #cursor-glow { display: none; }
-  body { cursor: auto; }
+  #custom-cursor { display: none; }
 }
 
 #particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; opacity: 0.4; }
@@ -120,7 +119,7 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 }
 @keyframes fadeSymbol { 0% { opacity: 0; transform: translateY(16px); } 100% { opacity: 1; transform: translateY(0); } }
 
-/* ── 临时编号 (竖排侧边条修复) ── */
+/* ── 临时编号 ── */
 #temp-id {
   position: fixed; top: 50%; right: 12px; z-index: 90; pointer-events: none;
   font-size: 0.65rem; color: var(--gold); letter-spacing: 0.2em;
@@ -133,19 +132,70 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 }
 
 /* ── 布局 & 组件 ── */
-.hero { min-height: 80vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; order: 1; transition: transform 2s ease; }
-.hero-title { font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: bold; letter-spacing: 0.2em; color: var(--gold); text-align: center; transition: text-shadow 2s ease, color 2s ease; }
+.hero { padding: 2.5rem 1rem 1.2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; order: 1; transition: transform 2s ease; }
+.hero-title { font-size: clamp(1.1rem, 3vw, 1.8rem); font-weight: bold; letter-spacing: 0.25em; color: var(--gold); text-align: center; transition: text-shadow 2s ease, color 2s ease; }
 .hero-title.restoring { color: #e8c882; text-shadow: 0 0 20px rgba(232,200,130,0.8); }
+
+.roadViewport {
+  width: 100%;
+  max-height: 48vh;
+  margin: 0 auto;
+  border: 1px solid rgba(185, 28, 28, 0.25);
+  overflow: hidden;
+  position: relative;
+}
+.roadViewport svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 48vh;
+}
 
 .divider { width: 100%; height: 1px; background: var(--border); margin: 0; order: 2; }
 
-.bio-section { padding: 3rem 2rem; max-width: 900px; margin: 0 auto; order: 3; transition: transform 0.5s ease; width: 100%; }
+.bio-section { padding: 3rem 2rem; max-width: 900px; margin: 0 auto; order: 5; transition: transform 0.5s ease; width: 100%; }
 .bio-card { background: var(--deep); padding: 2rem; border-left: 3px solid var(--gold); border: 1px solid var(--border); border-left-width: 3px; }
 .bio-text { font-size: 0.95rem; text-align: justify; white-space: pre-line; transition: opacity 0.3s; letter-spacing: 0.02em; }
 
-.music-section { padding: 3rem 2rem; max-width: 900px; margin: 0 auto; order: 5; transition: transform 0.5s ease; width: 100%; }
-.section-label { font-size: 0.75rem; letter-spacing: 0.4em; color: var(--gold); margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem; }
+.music-section { padding: 3rem 2rem; max-width: 900px; margin: 0 auto; order: 7; transition: transform 0.5s ease; width: 100%; }
+.section-label { font-size: 0.75rem; letter-spacing: 0.4em; color: var(--gold); margin-bottom: 2rem; display: flex; align-items: center; gap: 14px; }
 .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* AX-0 纯虚空挂载槽（无实体框、无背景、无毛玻璃） */
+#ax0-viewport {
+  width: 64px; height: 64px; flex-shrink: 0; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  border: none !important; box-shadow: none !important;
+  box-sizing: border-box; padding: 0;
+}
+/* SVG 流光描边层 */
+.ax0-border-stream, .ax0-spark-layer {
+  position: absolute; top: 0; left: 0; width: 64px; height: 64px;
+  pointer-events: none; overflow: visible;
+}
+.ax0-border-stream { z-index: 1; }
+#ax0-viewport > #ax0 { position: relative; z-index: 2; }
+.ax0-spark-layer { z-index: 3; }
+/* 纯光流线条：头亮尾暗衰减 */
+.ax0-stream {
+  fill: none; stroke: #ff3b30; stroke-width: 1.3; stroke-linecap: round;
+  stroke-dasharray: 1 8 2 6 5 5 10 4 60 139;
+  filter: drop-shadow(0 0 5px rgba(255, 59, 48, 0.9));
+  animation: ax0-flow 15s linear infinite;
+}
+@keyframes ax0-flow {
+  0%   { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -240; }
+}
+/* 警戒激活：光束自身超频过载 */
+#ax0-viewport.ax0-alerting .ax0-stream {
+  stroke: #ff2211; stroke-width: 1.5;
+  animation-duration: 4s;
+  filter: drop-shadow(0 0 8px rgba(255,34,17,1)) drop-shadow(0 0 2px #fff);
+}
+#ax0-viewport.ax0-alerting { box-shadow: none !important; }
 
 /* ── 音乐区 ── */
 .archive-entry {
@@ -177,16 +227,149 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 .track-log s { text-decoration: line-through; color: #444; }
 .hidden-audio { display: none; }
 
-/* ── 彩蛋 ── */
-.easter-egg { position: fixed; color: var(--muted); font-size: 1.2rem; pointer-events: none; z-index: 8000; letter-spacing: 0.1em; text-shadow: 0 0 10px rgba(255,255,255,0.1); white-space: nowrap; transform: translate(-50%, -50%); opacity: 0; }
-.egg-float { animation: floatUp 3s ease-out forwards; }
-.egg-float-fast { animation: floatUp 1.95s ease-out forwards; }
-.egg-float-slow { animation: floatUp 4.4s ease-out forwards; }
-@keyframes floatUp { 0% { opacity: 0; transform: translate(-50%, 0); } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -60px); filter: blur(2px); } }
-.egg-sink { transition: all 3s ease; opacity: 1; transform: translate(-50%, -50%) scale(1); }
-.egg-sink.fade { opacity: 0; transform: translate(-50%, -50%) scale(0.8); filter: blur(4px); }
+/* ── 彩蛋 (橡皮擦式擦除) ── */
+.easter-egg {
+  position: fixed;
+  color: var(--muted);
+  font-size: 1.2rem;
+  pointer-events: none;
+  z-index: 999999;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 10px rgba(255,255,255,0.1);
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+.egg-erase {
+  -webkit-mask-image: linear-gradient(to left, transparent 0%, black 0%, black 100%);
+  mask-image: linear-gradient(to left, transparent 0%, black 0%, black 100%);
+  -webkit-mask-size: 200% 100%;
+  mask-size: 200% 100%;
+  -webkit-mask-position: right;
+  mask-position: right;
+  animation: eggErase 2s ease forwards;
+}
+@keyframes eggErase {
+  0%   { -webkit-mask-position: right; mask-position: right; opacity: 1; }
+  100% { -webkit-mask-position: -100% 0; mask-position: -100% 0; opacity: 0; }
+}
 
 .glitch-text { font-family: 'Consolas', 'JetBrains Mono', 'Fira Code', monospace; color: #666; }
+
+/* 右下角文件夹：初始完全隐身、无交互，滑动到底部后才显现 */
+.folder-icon {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 500;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(20px) scale(0.9);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.5s ease, filter 0.3s ease;
+}
+.folder-icon.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+.folder-icon:hover {
+  transform: translateY(-4px) scale(1.08);
+  filter: drop-shadow(0 0 12px rgba(185, 28, 28, 0.6));
+}
+
+/* 全屏遮罩：背景高斯模糊与暗化 */
+.letter-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 7, 6, 0.92);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+.letter-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 战术档案信纸：高级解密滑入+倾斜落位动画 */
+.letter-paper {
+  max-width: 540px;
+  width: 90%;
+  padding: 2.5rem;
+  background: #11100f;
+  border: 1px solid rgba(185, 28, 28, 0.35);
+  border-left: 3px solid var(--gold);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(185, 28, 28, 0.1);
+  transform: translateY(40px) scale(0.92) rotate(-1deg);
+  opacity: 0;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+}
+.letter-overlay.open .letter-paper {
+  transform: translateY(0) scale(1) rotate(0deg);
+  opacity: 1;
+}
+
+.letter-header {
+  font-size: 0.75rem;
+  color: var(--gold);
+  letter-spacing: 0.2em;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px dashed var(--faint);
+  padding-bottom: 0.5rem;
+}
+.letter-text {
+  font-family: 'Consolas', 'JetBrains Mono', monospace;
+  font-size: 0.92rem;
+  line-height: 2;
+  color: var(--text);
+  letter-spacing: 0.03em;
+}
+.letter-footer {
+  margin-top: 2rem;
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  text-align: right;
+}
+
+.system-stamp {
+  text-align: center;
+  font-family: 'Consolas', 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.18em;
+  color: rgba(212, 175, 110, 0.85);
+  margin: 0.6rem auto 0 auto;
+  padding: 0.4rem 1.4rem;
+  max-width: fit-content;
+  background: rgba(15, 14, 13, 0.6);
+  border-top: 1px dashed rgba(185, 28, 28, 0.4);
+  border-bottom: 1px dashed rgba(185, 28, 28, 0.4);
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+  position: relative;
+}
+.system-stamp::before {
+  content: "GEWU-SRV-09 // ATOMIC REF";
+  position: absolute;
+  top: -1rem;
+  left: 0;
+  font-size: 0.55rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  opacity: 0.7;
+}
+.stamp-ss {
+  color: #f43f5e;
+  font-weight: bold;
+  display: inline-block;
+  transition: opacity 0.08s linear;
+}
 
 </style>
 </head>
@@ -205,7 +388,44 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
   </div>
 </div>
 
-<div id="cursor-glow"><div id="cursor-dot"></div></div>
+<div id="custom-cursor">
+  <svg width="28" height="28" viewBox="0 0 2048 2048" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <path id="mimo-outerShape" d="M582.60 1829.40 c-16.80 -66.20 -45.40 -178.80 -63.60 -250.40 -33 -129.20 -86.60 -340.20 -117.20 -461 -8.80 -34.60 -24 -94.40 -33.80 -133 -9.80 -38.40 -47.60 -187.40 -84 -331 -36.40 -143.60 -71.60 -281.60 -78 -307 -41 -159.60 -60 -236.60 -60 -243.40 0 -7 0.40 -7.60 6 -7.60 3.20 0 14.20 3.60 24.40 8.20 32.60 14.40 125.60 54.80 225.60 98.20 53.40 23 111 48 128 55.60 48.20 21.20 199.20 86.80 260 113 30.60 13.20 185 80.40 320 139 76.40 33.20 179.60 78 229 99.40 150 65 163.20 70.80 242 105.20 41.80 18.20 93.20 40.40 114 49.40 21 9.20 51 22.20 67 29.20 16 7 53.80 23.40 84 36.40 l55 24 0.60 6.80 c0.60 6.20 0 7 -6 9 -3.60 1.20 -44.80 17.60 -91.40 36.40 -46.60 18.80 -86.80 34.20 -89.40 34.20 -2.60 0 -42.80 -16.60 -89.40 -36.80 -46.40 -20.20 -119 -51.80 -161.40 -70.20 -42.40 -18.40 -104.40 -45.40 -138 -60 -33.60 -14.60 -84.40 -36.60 -113 -49 -28.60 -12.40 -76.80 -33.20 -107 -46.40 -30.20 -13.20 -67.20 -29.20 -82 -35.60 -25.20 -10.80 -111.80 -48.40 -153 -66.40 -21.20 -9.40 -76.20 -33.20 -127.40 -55.40 -20.20 -8.60 -75.20 -32.60 -122.60 -53.20 -47.20 -20.60 -98.20 -42.60 -113 -49 -14.80 -6.40 -41.80 -18 -60 -26 -66 -28.80 -77 -33.40 -77.60 -32.20 -0.20 0.80 11.20 47.60 25.60 104.20 14.40 56.60 47.60 188.60 74 293 26.40 104.60 60.60 240 76 301 28.40 112 67.60 267.60 117.20 464 15 58.80 35.20 138.80 45 177.80 9.80 38.80 17.80 74.40 17.80 79.20 0 7.40 -3.80 14.60 -30.60 58.20 -16.80 27.40 -39 64 -49.40 81.20 -18.80 31.20 -19 31.60 -26 31.60 l-7 0 -30.40 -120.60z" />
+      <linearGradient id="mimo-gradLongArm" x1="100" y1="1800" x2="450" y2="80" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="rgba(245, 238, 220, 0.95)"/>
+        <stop offset="40%" stop-color="rgba(196, 162, 96, 0.92)"/>
+        <stop offset="100%" stop-color="rgba(120, 92, 52, 0.95)"/>
+      </linearGradient>
+      <linearGradient id="mimo-gradShortArm" x1="1900" y1="1800" x2="450" y2="80" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="rgba(245, 238, 220, 0.95)"/>
+        <stop offset="40%" stop-color="rgba(210, 196, 160, 0.9)"/>
+        <stop offset="100%" stop-color="rgba(120, 92, 52, 0.95)"/>
+      </linearGradient>
+      <clipPath id="mimo-maskLeft">
+        <polygon points="0,0 450,0 1300,2048 0,2048" />
+      </clipPath>
+      <clipPath id="mimo-maskRight">
+        <polygon points="450,0 2048,0 2048,2048 1300,2048" />
+      </clipPath>
+      <filter id="mimo-glow" x="-150%" y="-150%" width="400%" height="400%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="600" result="blur"/>
+        <feColorMatrix in="blur" type="matrix"
+          values="0 0 0 0 0.9   0 0 0 0 0.82   0 0 0 0 0.55   0 0 0 1 0" result="tinted"/>
+        <feMerge>
+          <feMergeNode in="tinted"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+    <g>
+      <use href="#mimo-outerShape" filter="url(#mimo-glow)" class="mimo-glow-layer" fill="rgba(230,210,170,1)"/>
+      <use href="#mimo-outerShape" clip-path="url(#mimo-maskLeft)" fill="url(#mimo-gradLongArm)" />
+      <use href="#mimo-outerShape" clip-path="url(#mimo-maskRight)" fill="url(#mimo-gradShortArm)" />
+      <path d="M819.40 1610.60 c-0.60 -0.80 -10.40 -39.40 -22.20 -85.60 -23.60 -93.80 -74.20 -292.60 -122 -479 -7.20 -28 -30.60 -120.20 -52.20 -205 -21.60 -84.60 -44.20 -173 -50.20 -196.20 -6 -23.40 -10.80 -46 -10.80 -50.60 0 -8 0.20 -8.20 7 -8.20 4.60 0 26.20 8.40 62.60 24.20 55 24 135.40 59 160.40 69.80 35.20 15.20 48 20.80 84 36.40 21.40 9.40 76.80 33.60 123 53.60 46.20 20 118.20 51.40 160 69.60 41.80 18 89 38.60 105 45.40 16 7 54.20 23.60 85 37 30.80 13.40 82.60 36 115 50 32.40 14 61.40 26.60 64.60 28 4.20 2 5.40 4 5.40 9 l0 6.20 -82.40 33.80 c-45.40 18.40 -98.80 40.20 -118.60 48.20 -19.80 8 -83.80 34.20 -142.40 58.20 l-106.40 43.60 -21.80 36 c-12 19.80 -39.80 65.80 -61.80 102 -69.20 114 -120.40 198.60 -143.60 237 -21.80 36 -22.60 37 -29.60 37.60 -3.80 0.40 -7.40 -0.20 -8 -1z" fill="rgba(168, 142, 88, 0.9)" />
+    </g>
+  </svg>
+</div>
 
 <canvas id="particles"></canvas>
 
@@ -216,18 +436,14 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
 
 <div class="page" id="mainContent">
   <section class="hero" id="heroSec">
-    <div class="hero-title" id="axiomTitle">[SYSTEM: THEAXIOMWRITER]</div>
+    <div class="hero-title" id="axiomTitle">GEWU RESEARCH INSTITUTE</div>
+    <div class="system-stamp" id="systemStamp"></div>
   </section>
-  <div class="divider"></div>
-  <section class="bio-section" id="bioSec">
-    <div class="section-label">[IDENTITY RECORD]</div>
-    <div class="bio-card" id="bioCard">
-      <div class="bio-text" id="bioText">A speculative fiction author core-identified as Axiom, currently executing strategic narrative deployment under the designation TheAxiomWriter. The entity has pioneered and managed decentralized, open-source literary education across global sectors—yielding an aggregate instructional output of 900K words. The subject is currently restructuring a brand-new cosmic world-building matrix via "I Manage Gods".</div>
-    </div>
+  <section class="road-section" style="width:100%; overflow:hidden; position:relative; z-index:1;">
+    <div class="roadViewport" id="roadViewport"></div>
   </section>
-  <div class="divider"></div>
   <section class="music-section" id="musicSec">
-    <div class="section-label">// CAPTURED RESIDUAL ECHOES</div>
+    <div class="section-label"><div id="ax0-viewport"></div>// CAPTURED RESIDUAL ECHOES</div>
     <button class="archive-entry" id="archiveEntry">[ ACCESS AUDIO ARCHIVE — 8 FILES SEALED ]</button>
     <div class="archive-list" id="archiveList"></div>
   </section>
@@ -235,39 +451,131 @@ body.blink-soft { animation: softBlink 1.5s ease-in-out; }
   <div id="temp-id"></div>
 </div>
 
+<!-- 右下角悬浮文件夹 -->
+<div class="folder-icon" id="folderIcon" title="[UNOPENED DOSSIER]">
+  <svg width="36" height="30" viewBox="0 0 40 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2 6 C2 4 4 2 6 2 L14 2 L18 6 L34 6 C36 6 38 8 38 10 L38 28 C38 30 36 32 34 32 L6 32 C4 32 2 30 2 28 Z"
+          fill="rgba(185, 28, 28, 0.12)" stroke="rgba(185, 28, 28, 0.6)" stroke-width="1.5"/>
+  </svg>
+</div>
+
+<!-- 信纸弹窗遮罩 -->
+<div class="letter-overlay" id="letterOverlay">
+  <div class="letter-paper">
+    <div class="letter-header">[IDENTITY RECORD — CLASSIFIED]</div>
+    <div class="letter-text">A speculative fiction author core-identified as Axiom, currently executing strategic narrative deployment under the designation TheAxiomWriter. The entity has pioneered and managed decentralized, open-source literary education across global sectors—yielding an aggregate instructional output of 900K words. The subject is currently restructuring a brand-new cosmic world-building matrix via "I Manage Gods".</div>
+    <div class="letter-footer">— FILE EXTRACTED FROM GEWU RESEARCH INSTITUTE ARCHIVE</div>
+  </div>
+</div>
+
+<script src="car.js"></script>
 <script>
 // ═══════════════════════════════════════════════
 // 核心引擎区 (无条件执行)
 // ═══════════════════════════════════════════════
 
+// --- 0-B. 额外 keyframe 注入 (警示灯快闪) ---
+(function(){
+  var s = document.createElement('style');
+  s.textContent = '@keyframes beaconFlash{0%,49%{opacity:1}50%,100%{opacity:0.1}}';
+  document.head.appendChild(s);
+})();
+
+// --- 0. 禁用浏览器滚动位置记忆 & 强制绝对锁顶 ---
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+window.scrollTo(0, 0);
+window.addEventListener('beforeunload', () => {
+  window.scrollTo(0, 0);
+});
+
 let isPaused = false;
-let mx = window.innerWidth/2, my = window.innerHeight/2;
 let audioCtx = null;
 let clickCount = 0;
 
-// --- 1. 光晕鼠标 (立即初始化到屏幕中心) ---
-const cursorGlow = document.getElementById('cursor-glow');
-if (cursorGlow) {
-    cursorGlow.style.left = (window.innerWidth / 2) + 'px';
-    cursorGlow.style.top = (window.innerHeight / 2) + 'px';
-}
+// --- 1. 自定义指针 (直接赋值, 无 rAF 包装) ---
+const cursor = document.getElementById('custom-cursor');
 
-function updateMousePos(x, y) {
-    mx = x; my = y;
-    if(!isPaused && cursorGlow) { 
-        cursorGlow.style.left = mx + 'px'; 
-        cursorGlow.style.top = my + 'px'; 
+window.addEventListener('mousemove', (e) => {
+  if (cursor) cursor.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+});
+
+window.addEventListener('mousedown', () => { if (cursor) cursor.classList.add('active'); });
+window.addEventListener('mouseup', () => { if (cursor) cursor.classList.remove('active'); });
+
+// --- 1.2 鼠标静止自动淡出 ---
+let idleTimer;
+function resetCursorIdle() {
+  if (cursor) {
+    cursor.style.transition = 'opacity 0.2s ease';
+    cursor.style.opacity = '1';
+  }
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    if (cursor) {
+      cursor.style.transition = 'opacity 1.5s ease';
+      cursor.style.opacity = '0';
     }
+  }, 8000);
 }
-document.addEventListener('mousemove', e => updateMousePos(e.clientX, e.clientY));
-document.addEventListener('touchmove', e => {
-    if(e.touches.length > 0) updateMousePos(e.touches[0].clientX, e.touches[0].clientY);
-}, { passive: true });
+window.addEventListener('mousemove', resetCursorIdle);
+window.addEventListener('mousedown', resetCursorIdle);
+resetCursorIdle();
 
-if (cursorGlow) {
-    document.addEventListener('mousedown', () => cursorGlow.style.transform = 'translate(-50%, -50%) scale(0.8)');
-    document.addEventListener('mouseup', () => cursorGlow.style.transform = 'translate(-50%, -50%) scale(1)');
+// --- 1.1 鼠标跟随流光尾迹 ---
+const trailCanvas = document.createElement('canvas');
+trailCanvas.style.position = 'fixed';
+trailCanvas.style.top = '0';
+trailCanvas.style.left = '0';
+trailCanvas.style.pointerEvents = 'none';
+trailCanvas.style.zIndex = '99998';
+document.body.appendChild(trailCanvas);
+
+const tctx = trailCanvas.getContext('2d');
+function resizeTrail() {
+  trailCanvas.width = window.innerWidth;
+  trailCanvas.height = window.innerHeight;
 }
+resizeTrail();
+window.addEventListener('resize', resizeTrail);
+
+let trailDots = [];
+let lastPoint = { x: 0, y: 0 };
+let lastTrailTime = 0;
+
+window.addEventListener('mousemove', (e) => {
+  const now = performance.now();
+  if (now - lastTrailTime < 40) return;
+  const dist = Math.hypot(e.clientX - lastPoint.x, e.clientY - lastPoint.y);
+  if (dist < 4) return;
+  lastPoint = { x: e.clientX, y: e.clientY };
+  lastTrailTime = now;
+
+  trailDots.push({
+    x: e.clientX + 16,
+    y: e.clientY + 16,
+    life: 1,
+    size: Math.random() * 1.2 + 0.5,
+    color: Math.random() > 0.7 ? '185,28,28' : '230,200,140'
+  });
+
+  if (trailDots.length > 15) trailDots.shift();
+});
+
+function drawTrail() {
+  tctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+  trailDots.forEach(d => {
+    d.life -= 0.045;
+    tctx.beginPath();
+    tctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+    tctx.fillStyle = `rgba(${d.color}, ${Math.max(d.life, 0) * 0.35})`;
+    tctx.fill();
+  });
+  trailDots = trailDots.filter(d => d.life > 0);
+  requestAnimationFrame(drawTrail);
+}
+drawTrail();
 
 // --- 2. 粒子系统 (双色漂移淡出重写版) ---
 const canvas = document.getElementById('particles');
@@ -311,7 +619,7 @@ if (canvas) {
     drawParticles();
 }
 
-// --- 3. 全局点击与彩蛋 ---
+// --- 3. 全局点击与彩蛋 (不包含 135, 由 135 自行处理) ---
 document.addEventListener('click', (e) => {
   if (!audioCtx) {
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(err) {}
@@ -320,51 +628,54 @@ document.addEventListener('click', (e) => {
     audioCtx.resume();
   }
 
-  if(e.target.closest('a') || e.target.closest('iframe') || e.target.closest('.bio-card') || e.target.closest('.music-card') || e.target.closest('.section-label') || e.target.closest('button') || e.target.closest('#warning-screen') || e.target.closest('#temp-id') || e.target.closest('.archive-entry') || e.target.closest('.track-item')) return;
+  if(e.target.closest('button') || e.target.closest('a') || e.target.closest('.play-btn') || e.target.closest('#archiveEntry') || e.target.closest('#warning-screen') || e.target.closest('#skyHit') || e.target.closest('#roadHit') || e.target.closest('#rideHit')) return;
   
-  clickCount++;
-  
-  const spawnText = (text, animClass, typeWriter = false) => {
+  function spawnText(text, typeWriter = false) {
+    clickCount++;
     let el = document.createElement('div');
-    el.className = `easter-egg ${animClass}`;
-    el.style.left = e.clientX + 'px'; el.style.top = e.clientY + 'px';
+    el.className = 'easter-egg';
+    el.style.left = e.clientX + 'px';
+    el.style.top = e.clientY + 'px';
     document.body.appendChild(el);
-    
-    if(typeWriter) {
-      el.classList.add('egg-sink');
+
+    function startErase() {
+      el.classList.add('egg-erase');
+      setTimeout(() => el.remove(), 2000);
+    }
+
+    if (typeWriter) {
       let i = 0;
       let timer = setInterval(() => {
-        el.textContent += text.charAt(i); i++;
-        if(i >= text.length) { 
-            clearInterval(timer);
-            setTimeout(() => { el.classList.add('fade'); setTimeout(()=>el.remove(), 3000); }, 2000);
+        el.textContent += text.charAt(i);
+        i++;
+        if (i >= text.length) {
+          clearInterval(timer);
+          setTimeout(startErase, 600);
         }
-      }, 100);
+      }, 30);
     } else {
       el.textContent = text;
-      setTimeout(() => el.remove(), 5000);
+      el.style.opacity = '0';
+      requestAnimationFrame(() => {
+        el.style.transition = 'opacity 0.4s ease';
+        el.style.opacity = '1';
+      });
+      setTimeout(startErase, 2200);
     }
     return el;
-  };
-
-  if(clickCount === 7) spawnText("WHAT ARE YOU DOING?", "egg-float");
-  else if(clickCount === 13) spawnText("STOP.", "egg-float-fast");
-  else if(clickCount === 21) spawnText("IS IT REALLY... WORTH IT...?", "egg-float-slow");
-  else if(clickCount === 27) spawnText("THE WORLD RUSHES. BUT FEAR NOT. IF YOU WISH, I WILL SINK WITH YOU TO THE BOTTOM.", "", true);
-  else if(clickCount === 33) {
-    let el = spawnText("YOU ARE CONTAINED. WILLINGLY.", "", true);
-    el.style.transitionDuration = "5s";
   }
+
+  if(clickCount === 7) spawnText("WHAT ARE YOU DOING?");
+  else if(clickCount === 13) spawnText("STOP.");
+  else if(clickCount === 21) spawnText("IS IT REALLY... WORTH IT...?");
+  else if(clickCount === 27) spawnText("THE WORLD RUSHES. BUT FEAR NOT. IF YOU WISH, I WILL SINK WITH YOU TO THE BOTTOM.", true);
+  else if(clickCount === 33) spawnText("YOU ARE CONTAINED. WILLINGLY.", true);
   else if(clickCount === 40) {
-    spawnText("I SEE YOU.", "egg-float");
+    spawnText("I SEE YOU.");
     isPaused = true;
     setTimeout(() => { isPaused = false; }, 3000);
   }
-  else if(clickCount === 48) {
-    spawnText("COME.", "egg-float");
-    document.body.classList.add('blink-soft');
-    setTimeout(() => document.body.classList.remove('blink-soft'), 1500);
-  }
+  else if(clickCount === 48) spawnText("COME.");
 });
 
 
@@ -399,6 +710,10 @@ function typeWriter(element, text, i) {
 
 function startMainSiteLogic() {
   try {
+    // 强制首屏锁顶 (二次保障)
+    window.scrollTo(0, 0);
+    document.querySelectorAll('[autofocus]').forEach(el => el.removeAttribute('autofocus'));
+
     const chars = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
     let lastId = sessionStorage.getItem('last_temp_id') || '';
     let newId = '';
@@ -437,7 +752,7 @@ function startMainSiteLogic() {
                 <span>${t.file}</span>
             </div>
             <div class="track-log" id="log-${index}"></div>
-            <audio class="hidden-audio" id="audio-${index}" src="${t.src}"></audio>
+            <audio class="hidden-audio" id="audio-${index}" src="${t.src}" preload="none"></audio>
         `;
         list.appendChild(item);
     });
@@ -467,6 +782,7 @@ function startMainSiteLogic() {
         });
     }
 
+    // --- 音频播放 (含报错排查与路径修复) ---
     let currentPlaying = null;
     document.querySelectorAll('.play-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -483,7 +799,24 @@ function startMainSiteLogic() {
             }
 
             if(audio.paused) {
-                audio.play().catch(e => console.error("Audio play failed:", e));
+                audio.play().catch(e => {
+                    console.error('[Audio] Play failed for track ' + index + ':', e.name, e.message);
+                    console.error('[Audio] Source:', audio.src);
+                    
+                    if (e.name === 'NotSupportedError' || e.name === 'AbortError') {
+                        const currentSrc = audio.getAttribute('src');
+                        if (currentSrc && !currentSrc.endsWith('.mp3')) {
+                            console.log('[Audio] Missing .mp3 extension, retrying with:', currentSrc + '.mp3');
+                            audio.src = currentSrc + '.mp3';
+                            audio.play().catch(e2 => {
+                                console.error('[Audio] Retry failed:', e2.name, e2.message);
+                                if (e2.name === 'NotSupportedError') {
+                                    console.error('[Audio] Likely CORS issue. Ensure audio files are served with correct MIME type and Access-Control-Allow-Origin header.');
+                                }
+                            });
+                        }
+                    }
+                });
                 this.innerText = '❚❚';
                 item.classList.add('playing');
                 currentPlaying = index;
@@ -496,6 +829,21 @@ function startMainSiteLogic() {
             }
         });
     });
+
+    // 音频加载诊断
+    document.querySelectorAll('audio').forEach((audio, i) => {
+        audio.addEventListener('error', function(e) {
+            const err = this.error;
+            console.error(`[Audio] Track ${i} load error: code=${err ? err.code : 'unknown'}, src=${this.src}`);
+            if (err && err.code === 4) {
+                console.error('[Audio] MEDIA_ERR_SRC_NOT_SUPPORTED — likely 404 or CORS. Check file exists at:', this.src);
+            }
+        });
+        audio.addEventListener('loadeddata', () => {
+            console.log(`[Audio] Track ${i} loaded OK:`, audio.src);
+        });
+    });
+
   } catch (err) {
       console.error("Error in startMainSiteLogic:", err);
   }
@@ -536,6 +884,78 @@ if (warningSeen) {
     if (agree2) agree2.addEventListener('click', () => { clearTimeout(warningTimer); proceedToMainSite(); });
 }
 
+// --- 二次首屏锁顶保障 ---
+window.addEventListener('load', () => { window.scrollTo(0, 0); });
+
+// --- 5. 隐藏文件夹信纸弹窗控制 (到底部显现 + 自动擦除淡出) ---
+const folderIcon = document.getElementById('folderIcon');
+const letterOverlay = document.getElementById('letterOverlay');
+
+let folderCycleTimer = null;
+let folderAtBottom = false;
+
+function checkScrollBottom() {
+  if (!folderIcon) return;
+  const scrollPosition = window.innerHeight + window.scrollY;
+  const threshold = document.documentElement.scrollHeight - 150;
+  const atBottom = scrollPosition >= threshold;
+
+  if (atBottom && !folderAtBottom) {
+    folderAtBottom = true;
+    folderIcon.classList.add('visible');
+    clearTimeout(folderCycleTimer);
+    folderCycleTimer = setTimeout(() => {
+      folderIcon.classList.remove('visible');
+    }, 2500);
+  } else if (!atBottom && folderAtBottom) {
+    folderAtBottom = false;
+    clearTimeout(folderCycleTimer);
+    folderIcon.classList.remove('visible');
+  }
+}
+
+window.addEventListener('scroll', checkScrollBottom);
+window.addEventListener('resize', checkScrollBottom);
+
+if (folderIcon && letterOverlay) {
+  folderIcon.addEventListener('click', () => {
+    letterOverlay.classList.add('open');
+  });
+  letterOverlay.addEventListener('click', (e) => {
+    if (e.target === letterOverlay) {
+      letterOverlay.classList.remove('open');
+    }
+  });
+}
+
+// --- 6. 2094 故事时间轴 (原子钟时间戳偏移算法) ---
+(function() {
+  const REAL_ANCHOR = Date.now();
+  const FICTION_ANCHOR = new Date('2094-09-29T15:00:37').getTime();
+  const OFFSET = FICTION_ANCHOR - REAL_ANCHOR;
+
+  function updateStamp() {
+    const fictionalNow = new Date(Date.now() + OFFSET);
+    const y = fictionalNow.getFullYear();
+    const m = String(fictionalNow.getMonth() + 1).padStart(2, '0');
+    const d = String(fictionalNow.getDate()).padStart(2, '0');
+    const hh = String(fictionalNow.getHours()).padStart(2, '0');
+    const mm = String(fictionalNow.getMinutes()).padStart(2, '0');
+    const ss = String(fictionalNow.getSeconds()).padStart(2, '0');
+
+    const stampEl = document.getElementById('systemStamp');
+    if (stampEl) {
+      stampEl.innerHTML = `[CURRENT STAMP: ${y}.${m}.${d} · ${hh}:${mm}:<span class="stamp-ss">${ss}</span> // CONTAINMENT PROTOCOL: ACTIVE]`;
+    }
+  }
+
+  updateStamp();
+  setInterval(updateStamp, 1000);
+})();
+
 </script>
+
+<script src="eye.js"></script>
+
 </body>
 </html>
